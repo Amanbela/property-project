@@ -86,8 +86,8 @@ const BuilderSchema = new Schema(
      */
 
     logo: {
-      type: String,
-      default: "",
+      imageUrl: { type: String, default: "" },
+      publicId: { type: String, default: "" }
     },
 
     foundedYear: {

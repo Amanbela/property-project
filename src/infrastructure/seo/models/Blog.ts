@@ -7,7 +7,10 @@ const blogSchema = new Schema(
     slug: { type: String, required: true, unique: true, index: true },
     excerpt: String,
     content: { type: String, default: "" },
-    featuredImage: String,
+    featuredImage: {
+      imageUrl: { type: String, default: "" },
+      publicId: { type: String, default: "" }
+    },
     category: String,
     seoTitle: String,
     seoDescription: String,

@@ -1,6 +1,6 @@
 "use server";
 
-import { v2 as cloudinary } from "cloudinary";
+import { uploadImage } from "@/lib/cloudinary";
 import { getAdminSession } from "@/lib/auth-guard";
 
 export async function uploadImageAdmin(formData: FormData) {
@@ -9,29 +9,38 @@ export async function uploadImageAdmin(formData: FormData) {
     return { ok: false as const, error: "Unauthorized" };
   }
 
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
-  if (!cloudName || !apiKey || !apiSecret) {
-    return { ok: false as const, error: "Cloudinary is not configured. Set CLOUDINARY_* env vars or paste image URLs manually." };
-  }
-
-  cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
-
   const file = formData.get("file");
-  if (!file || !(file instanceof Blob)) {
+  if (!file || !(file instanceof File)) {
     return { ok: false as const, error: "No file provided" };
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const base64 = `data:${(file as File).type};base64,${buffer.toString("base64")}`;
+  try {
+    const result = await uploadImage(file);
+    return {
+      ok: true as const,
+      imageUrl: result.imageUrl,
+      publicId: result.publicId,
+    };
+  } catch (e) {
+    return { ok: false as const, error: String(e) };
+  }
+}
+
+export async function uploadMultipleImagesAdmin(formData: FormData) {
+  const s = await getAdminSession();
+  if (!s?.user?.email || s.user.role !== "admin") {
+    return { ok: false as const, error: "Unauthorized" };
+  }
+
+  const files = formData.getAll("files") as File[];
+  if (!files.length) {
+    return { ok: false as const, error: "No files provided" };
+  }
 
   try {
-    const res = await cloudinary.uploader.upload(base64, {
-      folder: "indore-property-budget-finder",
-      resource_type: "image"
-    });
-    return { ok: true as const, url: res.secure_url };
+    const { uploadMultipleImages } = await import("@/lib/cloudinary");
+    const results = await uploadMultipleImages(files);
+    return { ok: true as const, images: results };
   } catch (e) {
     return { ok: false as const, error: String(e) };
   }

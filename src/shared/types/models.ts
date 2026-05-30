@@ -11,6 +11,52 @@ export const FAQSchema = z.object({
   answer: z.string().min(1)
 });
 
+export const CloudinaryImageSchema = z.union([
+  z.object({
+    imageUrl: z.string().default(""),
+    publicId: z.string().default("")
+  }),
+  z.string()
+]).transform((val) => {
+  if (typeof val === "string") {
+    return { imageUrl: val, publicId: "" };
+  }
+  return val;
+});
+
+export type CloudinaryImage = z.infer<typeof CloudinaryImageSchema>;
+
+export function toCloudinaryImage(value: unknown): CloudinaryImage {
+  if (!value) return { imageUrl: "", publicId: "" };
+  if (typeof value === "string") return { imageUrl: value, publicId: "" };
+  if (typeof value === "object") {
+    const v = value as Record<string, unknown>;
+    return {
+      imageUrl: String(v.imageUrl ?? v.url ?? ""),
+      publicId: String(v.publicId ?? ""),
+    };
+  }
+  return { imageUrl: "", publicId: "" };
+}
+
+export function toCloudinaryImages(value: unknown): CloudinaryImage[] {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.map((v) => toCloudinaryImage(v));
+  }
+  return [];
+}
+
+export function extractImageUrl(value: unknown): string {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object") {
+    const v = value as Record<string, unknown>;
+    return String(v.imageUrl ?? v.url ?? "");
+  }
+  return "";
+}
+
 // --- Area ---
 export const BudgetCategoryEnum = z.enum(["budget", "mid-range", "premium", "luxury"]);
 export const PropertyTypeEnum = z.enum(["plot", "flat", "villa", "commercial"]);
@@ -59,8 +105,8 @@ export const AreaSchema = z.object({
   coordinates: GeoLocationSchema.optional(),
 
   // Media
-  featuredImage: z.string().optional(),
-  gallery: z.array(z.string()).default([]),
+  featuredImage: CloudinaryImageSchema.optional().default({ imageUrl: "", publicId: "" }),
+  gallery: z.array(CloudinaryImageSchema).default([]),
 
   // Content
   pros: z.array(z.string()).default([]),
@@ -108,7 +154,7 @@ export const ColonySchema = z.object({
   cons: z.array(z.string()).default([]),
   description: z.string().optional(),
   geoLocation: GeoLocationSchema.optional(),
-  images: z.array(z.string()).default([]),
+  images: z.array(CloudinaryImageSchema).default([]),
   faqs: z.array(FAQSchema).default([]),
   curationNotes: z.string().optional(),
   verificationChecklist: z.object({
@@ -136,7 +182,7 @@ export const BuilderSchema = z.object({
     rating: z.number().min(1).max(5),
     comment: z.string().optional(),
   })).default([]),
-  logo: z.string().optional(),
+  logo: CloudinaryImageSchema.optional().default({ imageUrl: "", publicId: "" }),
   description: z.string().optional(),
   contactNumber: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
@@ -163,7 +209,7 @@ export const AgentSchema = z.object({
   experience: z.number().default(0),
   rating: z.number().min(0).max(5).default(0),
   responseTime: z.number().default(0), // in minutes
-  profileImage: z.string().optional(),
+  profileImage: CloudinaryImageSchema.optional().default({ imageUrl: "", publicId: "" }),
   companyName: z.string().optional(),
   totalDealsClosed: z.number().default(0),
   activeStatus: z.boolean().default(true),
@@ -205,7 +251,7 @@ export const BlogSchema = z.object({
   slug: z.string().min(1, "Slug is required"),
   excerpt: z.string().optional(),
   content: z.string().default(""),
-  featuredImage: z.string().optional(),
+  featuredImage: CloudinaryImageSchema.optional().default({ imageUrl: "", publicId: "" }),
   category: z.string().default("Property Insight"),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),

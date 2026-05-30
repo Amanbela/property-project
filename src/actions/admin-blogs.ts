@@ -6,6 +6,14 @@ import { connectForWrites } from "@/infrastructure/db/connection";
 import { getAdminSession } from "@/lib/auth-guard";
 import { BlogModel } from "@/infrastructure/seo/models/Blog";
 import { slugify } from "@/utils/slug";
+import { deleteImage } from "@/lib/cloudinary";
+
+const cloudinaryImageSchema = z.union([
+  z.object({ imageUrl: z.string(), publicId: z.string() }),
+  z.string()
+]).transform((val) =>
+  typeof val === "string" ? { imageUrl: val, publicId: "" } : val
+);
 
 const blogSchema = z.object({
   title: z.string().min(2),
@@ -13,7 +21,7 @@ const blogSchema = z.object({
   excerpt: z.string().optional(),
   content: z.string().optional(),
   category: z.string().optional(),
-  featuredImage: z.string().optional(),
+  featuredImage: cloudinaryImageSchema.optional().default({ imageUrl: "", publicId: "" }),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   keywords: z.array(z.string()),
@@ -106,6 +114,13 @@ export async function autosaveBlogDraft(id: string, content: string) {
 export async function deleteBlog(id: string) {
   if (!(await assertAdmin())) return { ok: false as const, error: "Unauthorized" };
   await connectForWrites();
+  const blog = await BlogModel.findById(id).lean();
+  if (blog) {
+    const featured = blog.featuredImage as { publicId?: string } | undefined;
+    if (featured?.publicId) {
+      await deleteImage(featured.publicId);
+    }
+  }
   await BlogModel.findByIdAndDelete(id).exec();
   revalidatePath("/blog");
   revalidatePath("/admin/blogs");

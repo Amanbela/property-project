@@ -165,7 +165,10 @@ const ColonySchema = new Schema(
     },
 
     // Media
-    images: [String],
+    images: [{
+      imageUrl: { type: String, default: "" },
+      publicId: { type: String, default: "" }
+    }],
 
     // FAQs
     faqs: [

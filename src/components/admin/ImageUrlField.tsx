@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { uploadImageAdmin } from "@/actions/admin-upload";
-import { Image, Upload, X, Loader2, Link as LinkIcon } from "lucide-react";
+import { Upload, X, Loader2, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface ImageUrlFieldProps {
@@ -20,6 +20,15 @@ export function ImageUrlField({ label, value, onChange, error }: ImageUrlFieldPr
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Only JPG, PNG, and WEBP files are allowed");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File too large. Maximum size is 5MB");
+      return;
+    }
+
     setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);
@@ -27,13 +36,13 @@ export function ImageUrlField({ label, value, onChange, error }: ImageUrlFieldPr
     try {
       const res = await uploadImageAdmin(formData);
       if (res.ok) {
-        onChange(res.url);
+        onChange(res.imageUrl);
         setShowInput(false);
         toast.success("Image uploaded successfully");
       } else {
         toast.error(res.error || "Upload failed");
       }
-    } catch (err) {
+    } catch {
       toast.error("An error occurred during upload");
     } finally {
       setIsUploading(false);
@@ -43,7 +52,7 @@ export function ImageUrlField({ label, value, onChange, error }: ImageUrlFieldPr
   return (
     <div className="space-y-2">
       <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">{label}</label>
-      
+
       {value && !showInput ? (
         <div className="relative group aspect-video rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950">
           <img src={value} alt="Preview" className="w-full h-full object-cover" />
@@ -79,7 +88,7 @@ export function ImageUrlField({ label, value, onChange, error }: ImageUrlFieldPr
               }`}
             />
           </div>
-          
+
           <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer group">
             {isUploading ? (
               <div className="flex flex-col items-center gap-2">
@@ -94,11 +103,11 @@ export function ImageUrlField({ label, value, onChange, error }: ImageUrlFieldPr
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Click to upload image</span>
               </div>
             )}
-            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isUploading} />
+            <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileChange} disabled={isUploading} />
           </label>
         </div>
       )}
-      
+
       {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
     </div>
   );

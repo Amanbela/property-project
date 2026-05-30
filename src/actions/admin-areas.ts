@@ -6,6 +6,15 @@ import { connectForWrites } from "@/infrastructure/db/connection";
 import { getAdminSession } from "@/lib/auth-guard";
 import { AreaModel } from "@/features/colony-intelligence/models/Area";
 import { slugify } from "@/utils/slug";
+import { AreaSchema } from "@/shared/types/models";
+import { deleteImage, deleteMultipleImages } from "@/lib/cloudinary";
+
+const cloudinaryImageSchema = z.union([
+  z.object({ imageUrl: z.string(), publicId: z.string() }),
+  z.string()
+]).transform((val) =>
+  typeof val === "string" ? { imageUrl: val, publicId: "" } : val
+);
 
 const areaSchema = z.object({
   name: z.string().min(2),
@@ -24,8 +33,8 @@ const areaSchema = z.object({
   lifestyleTags: z.array(z.string()),
   pros: z.array(z.string()),
   cons: z.array(z.string()),
-  featuredImage: z.string().optional(),
-  gallery: z.array(z.string()),
+  featuredImage: cloudinaryImageSchema.optional().default({ imageUrl: "", publicId: "" }),
+  gallery: z.array(cloudinaryImageSchema).default([]),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   published: z.boolean()
@@ -145,17 +154,31 @@ export async function updateArea(id: string, _prev: unknown, formData: FormData)
 export async function deleteArea(id: string) {
   if (!(await assertAdmin())) return { ok: false as const, error: "Unauthorized" };
   await connectForWrites();
+  const area = await AreaModel.findById(id).lean();
+  if (area) {
+    const publicIds: string[] = [];
+    if (area.featuredImage && typeof area.featuredImage === "object") {
+      const fi = area.featuredImage as { publicId?: string };
+      if (fi.publicId) publicIds.push(fi.publicId);
+    }
+    if (area.gallery && Array.isArray(area.gallery)) {
+      area.gallery.forEach((g: unknown) => {
+        if (g && typeof g === "object") {
+          const img = g as { publicId?: string };
+          if (img.publicId) publicIds.push(img.publicId);
+        }
+      });
+    }
+    if (publicIds.length > 0) {
+      await deleteMultipleImages(publicIds);
+    }
+  }
   await AreaModel.findByIdAndDelete(id).exec();
   revalidatePath("/areas");
   revalidatePath("/admin/areas");
   revalidatePath("/");
   return { ok: true as const };
 }
-
-import { AreaSchema } from "@/shared/types/models";
-
-// Existing FormData actions...
-// ... (omitted for brevity in this replace, but usually I should keep them or replace them)
 
 export async function createAreaDirect(data: Record<string, unknown>) {
   if (!(await assertAdmin())) return { ok: false as const, error: "Unauthorized" };

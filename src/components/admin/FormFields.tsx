@@ -18,14 +18,23 @@ export const ImageField: React.FC<BaseFieldProps> = ({
       <Controller
         name={name}
         control={control}
-        render={({ field }) => (
-          <ImageUrlField
-            label={label}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors[name]?.message as string}
-          />
-        )}
+        render={({ field }) => {
+          const currentValue =
+            typeof field.value === "object" && field.value !== null
+              ? (field.value as { imageUrl?: string }).imageUrl || ""
+              : String(field.value ?? "");
+
+          return (
+            <ImageUrlField
+              label={label}
+              value={currentValue}
+              onChange={(url) => {
+                field.onChange({ imageUrl: url, publicId: "" });
+              }}
+              error={errors[name]?.message as string}
+            />
+          );
+        }}
       />
     )}
   </div>

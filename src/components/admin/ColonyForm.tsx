@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ColonySchema, type Colony } from "@/shared/types/models";
 import { 
@@ -15,6 +15,7 @@ import {
   ImageField,
   CurationFieldSet
 } from "./FormFields";
+import { MultiImageUploader } from "./MultiImageUploader";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createColony, updateColony } from "@/actions/admin-colonies";
@@ -242,8 +243,17 @@ export function ColonyForm({ initialData, isEdit }: ColonyFormProps) {
               <ImageIcon size={20} />
               <h3 className="text-lg font-bold text-slate-800">Gallery</h3>
             </div>
-            <ArrayInputField label="Image URLs" name="images" register={register} errors={errors} control={control} placeholder="Enter image URLs separated by commas" />
-            <p className="text-[10px] text-slate-400">Paste URLs or use the Cloudinary upload in single fields (multi-upload pending).</p>
+            <Controller
+              name="images"
+              control={control}
+              render={({ field }) => (
+                <MultiImageUploader
+                  values={field.value || []}
+                  onChange={field.onChange}
+                  label="Colony Images"
+                />
+              )}
+            />
           </div>
         </div>
       </div>

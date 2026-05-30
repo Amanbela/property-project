@@ -6,6 +6,12 @@ import { connectForWrites } from "@/infrastructure/db/connection";
 import { getAdminSession } from "@/lib/auth-guard";
 import { ColonyModel } from "@/features/colony-intelligence/models/Colony";
 import { slugify } from "@/utils/slug";
+import { deleteImage, deleteMultipleImages } from "@/lib/cloudinary";
+
+const cloudinaryImageSchema = z.object({
+  imageUrl: z.string(),
+  publicId: z.string()
+});
 
 const colonySchema = z.object({
   colonyName: z.string().min(2),
@@ -30,7 +36,7 @@ const colonySchema = z.object({
   description: z.string().optional(),
   lat: z.coerce.number().optional(),
   lng: z.coerce.number().optional(),
-  images: z.array(z.string()),
+  images: z.array(cloudinaryImageSchema),
   published: z.boolean(),
 });
 
@@ -94,6 +100,15 @@ export async function updateColony(id: string, data: Record<string, unknown>) {
 export async function deleteColony(id: string) {
   if (!(await assertAdmin())) return { ok: false as const, error: "Unauthorized" };
   await connectForWrites();
+  const colony = await ColonyModel.findById(id).lean();
+  if (colony) {
+    const publicIds = (colony.images as { publicId?: string }[] || [])
+      .map((img) => img.publicId)
+      .filter(Boolean) as string[];
+    if (publicIds.length > 0) {
+      await deleteMultipleImages(publicIds);
+    }
+  }
   await ColonyModel.findByIdAndDelete(id).exec();
   revalidatePath("/colonies");
   revalidatePath("/admin/colonies");

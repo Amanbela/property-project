@@ -31,9 +31,13 @@ const NearbyPlaceSchema = new Schema(
 
 const ImageSchema = new Schema(
   {
-    url: {
+    imageUrl: {
       type: String,
       required: true,
+    },
+    publicId: {
+      type: String,
+      default: "",
     },
     alt: String,
   },

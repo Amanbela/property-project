@@ -20,6 +20,16 @@ export type BlogDoc = {
   updatedAt?: string;
 };
 
+function extractImageUrl(val: unknown): string {
+  if (!val) return "";
+  if (typeof val === "string") return val;
+  if (typeof val === "object") {
+    const v = val as Record<string, unknown>;
+    return String(v.imageUrl ?? v.url ?? "");
+  }
+  return "";
+}
+
 function toPublic(doc: Record<string, unknown> | null): BlogDoc | null {
   if (!doc) return null;
   return {
@@ -28,7 +38,7 @@ function toPublic(doc: Record<string, unknown> | null): BlogDoc | null {
     slug: String(doc.slug),
     excerpt: String(doc.excerpt ?? ""),
     content: String(doc.content ?? ""),
-    featuredImage: String(doc.featuredImage ?? ""),
+    featuredImage: extractImageUrl(doc.featuredImage),
     category: String(doc.category ?? ""),
     seoTitle: String(doc.seoTitle ?? ""),
     seoDescription: String(doc.seoDescription ?? ""),

@@ -73,8 +73,8 @@ const AgentSchema = new Schema(
      */
 
     profileImage: {
-      type: String,
-      default: "",
+      imageUrl: { type: String, default: "" },
+      publicId: { type: String, default: "" }
     },
 
     companyName: {

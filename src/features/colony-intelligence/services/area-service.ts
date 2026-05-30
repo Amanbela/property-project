@@ -26,6 +26,22 @@ export type AreaDoc = Area & {
   updatedAt?: string;
 };
 
+function extractImageUrl(val: unknown): string {
+  if (!val) return "";
+  if (typeof val === "string") return val;
+  if (typeof val === "object") {
+    const v = val as Record<string, unknown>;
+    return String(v.imageUrl ?? v.url ?? "");
+  }
+  return "";
+}
+
+function extractImageUrls(vals: unknown): string[] {
+  if (!vals) return [];
+  if (!Array.isArray(vals)) return [];
+  return vals.map((v) => extractImageUrl(v)).filter(Boolean);
+}
+
 function toPublic(doc: Record<string, unknown> | null): AreaDoc | null {
   if (!doc) return null;
   const o = doc as Record<string, unknown>;
@@ -61,8 +77,8 @@ function toPublic(doc: Record<string, unknown> | null): AreaDoc | null {
       lat: Number((o.coordinates as { lat?: number })?.lat ?? 0),
       lng: Number((o.coordinates as { lng?: number })?.lng ?? 0)
     },
-    featuredImage: String(o.featuredImage ?? ""),
-    gallery: (o.gallery as string[]) ?? [],
+    featuredImage: extractImageUrl(o.featuredImage),
+    gallery: extractImageUrls(o.gallery),
     pros: (o.pros as string[]) ?? [],
     cons: (o.cons as string[]) ?? [],
     lifestyleTags: (o.lifestyleTags as Area["lifestyleTags"]) ?? [],

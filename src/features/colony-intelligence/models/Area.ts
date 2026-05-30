@@ -135,9 +135,15 @@ const AreaSchema = new Schema(
     },
 
     // Media
-    featuredImage: String,
+    featuredImage: {
+      imageUrl: { type: String, default: "" },
+      publicId: { type: String, default: "" }
+    },
 
-    gallery: [String],
+    gallery: [{
+      imageUrl: { type: String, default: "" },
+      publicId: { type: String, default: "" }
+    }],
 
     // Content
     pros: [String],
