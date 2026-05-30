@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { MessageSquare, X } from "lucide-react";
+import { getSessionId } from "@/lib/session";
+import { trackEvent } from "@/actions/track";
 
 interface Props {
   blogTitle: string;
@@ -22,12 +24,18 @@ export function BlogWhatsAppCTA({ blogTitle, blogSlug }: Props) {
     const message = `Hi, I read your blog "${blogTitle}". Please suggest best areas in Indore under my budget.`;
     const url = `https://wa.me/${number.replace(/[^0-9+]/g, "")}?text=${encodeURIComponent(message)}`;
 
-    try {
-      const key = "indore_blog_wa_clicks";
-      const existing = JSON.parse(localStorage.getItem(key) || "[]");
-      existing.push({ blog: blogSlug, title: blogTitle, time: new Date().toISOString() });
-      localStorage.setItem(key, JSON.stringify(existing.slice(-20)));
-    } catch {}
+    const sessionId = getSessionId();
+    if (sessionId) {
+      trackEvent({
+        sessionId,
+        eventType: "whatsapp_clicked",
+        properties: {
+          pageUrl: window.location.href,
+          message: blogTitle,
+        },
+        source: "website",
+      });
+    }
 
     window.open(url, "_blank", "noopener,noreferrer");
   };

@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { createLead } from "@/actions/lead";
 import { Send, Loader2 } from "lucide-react";
+import { getSessionId } from "@/lib/session";
+import { trackEvent } from "@/actions/track";
 
 interface AreaLeadFormProps {
   areaName: string;
@@ -28,6 +30,16 @@ export function AreaLeadForm({ areaName }: AreaLeadFormProps) {
       return;
     }
 
+    const sessionId = getSessionId();
+    if (sessionId) {
+      trackEvent({
+        sessionId,
+        eventType: "contact_form_submitted",
+        properties: { areaName, budget: budgetNum, pageUrl: window.location.href },
+        source: "website",
+      });
+    }
+
     startTransition(async () => {
       const res = await createLead({
         name: form.name,
@@ -40,6 +52,14 @@ export function AreaLeadForm({ areaName }: AreaLeadFormProps) {
       if (res.ok) {
         setSuccess(true);
         setForm({ name: "", phone: "", budget: "" });
+        if (sessionId) {
+          trackEvent({
+            sessionId,
+            eventType: "lead_generated",
+            properties: { areaName, budget: budgetNum, phone: form.phone },
+            source: "website",
+          });
+        }
       } else {
         setError(res.message);
       }

@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { siteConfig } from "@/lib/seo";
 import { Toaster } from "sonner";
+import { TrackingProvider } from "@/components/TrackingProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,10 +34,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body>
-        <Navbar />
-        <main className="container-main py-8 md:py-12">{children}</main>
-        <Footer />
-        <Toaster richColors position="top-right" />
+        <TrackingProvider>
+          <Navbar />
+          <main className="container-main py-8 md:py-12">{children}</main>
+          <Footer />
+          <Toaster richColors position="top-right" />
+        </TrackingProvider>
       </body>
     </html>
   );

@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useTransition } from "react";
 import { AdminDataTable } from "@/components/admin/DataTable";
 import { Lead } from "@/shared/types/models";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Phone, Mail, Calendar, Download } from "lucide-react";
+import { updateLeadStatus } from "@/actions/admin-leads";
 
 export function LeadListClient({ initialData }: { initialData: Lead[] }) {
   const router = useRouter();
@@ -40,8 +41,13 @@ export function LeadListClient({ initialData }: { initialData: Lead[] }) {
             item.status === "interested" ? "bg-purple-100 text-purple-700" : "bg-green-100 text-green-700"
           }`}
           onChange={async (e) => {
-            // We would call a server action here to update status
-            toast.info(`Status update for ${item.name} to ${e.target.value} (Action pending implementation)`);
+            if (!item._id) return;
+            const res = await updateLeadStatus({ id: item._id, status: e.target.value as Lead["status"] });
+            if (res.ok) {
+              toast.success(`Updated ${item.name} to ${e.target.value}`);
+            } else {
+              toast.error(res.error || "Failed to update status");
+            }
           }}
         >
           <option value="new">New</option>

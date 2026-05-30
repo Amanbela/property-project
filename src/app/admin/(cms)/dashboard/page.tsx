@@ -6,6 +6,7 @@ import { BuilderRepository } from "@/infrastructure/db/repositories/BuilderRepos
 import { AgentRepository } from "@/infrastructure/db/repositories/AgentRepository";
 import { LeadRepository } from "@/infrastructure/db/repositories/LeadRepository";
 import { countBlogs } from "@/infrastructure/seo/services/blog-service";
+import { AnalyticsWidgets } from "@/components/admin/AnalyticsWidgets";
 import { 
   Building2, 
   MapPin, 
@@ -68,6 +69,9 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Analytics Widgets */}
+      <AnalyticsWidgets />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
