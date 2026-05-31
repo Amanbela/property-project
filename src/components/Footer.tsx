@@ -96,7 +96,7 @@ export function Footer() {
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-8 text-xs text-slate-400 md:flex-row">
           <p>© {new Date().getFullYear()} Indore Property. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href="/admin" className="transition-colors hover:text-brand-600">
+            <Link href="/admin/login" className="transition-colors hover:text-brand-600">
               Admin Login
             </Link>
           </div>

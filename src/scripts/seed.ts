@@ -59,8 +59,8 @@ async function run() {
   await BlogModel.insertMany(blogs);
   await SeoPageModel.insertMany(seoPages);
 
-  const email = (process.env.ADMIN_EMAIL || "admin@example.com").toLowerCase();
-  const password = process.env.ADMIN_PASSWORD || "changeme123";
+  const email = ( "admin@example.com").toLowerCase();
+  const password = "changeme123";
   const passwordHash = await bcrypt.hash(password, 12);
   await AdminUserModel.deleteMany({ email });
   await AdminUserModel.create({ email, passwordHash, role: "admin" });
