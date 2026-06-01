@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useWizardStore } from "../store/wizard-store";
+import { trackRecommendationSubmit } from "@/lib/analytics";
 import { AreaRecommendationCard } from "./AreaRecommendationCard";
 import type { Variants } from "framer-motion";
 
@@ -207,6 +208,8 @@ export function RecommendationWizard() {
         });
         const data = await response.json();
         setResults(data);
+
+        trackRecommendationSubmit(budgetLabel, propertyType);
 
         // Track request and views in localStorage
         updateSessionMetric("indore_prop_requests");

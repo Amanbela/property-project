@@ -1,6 +1,8 @@
 import { getPublishedAreas, mapAreaDocToArea } from "@/features/colony-intelligence/services/area-service";
 import { AreaExplorer } from "@/components/AreaExplorer";
 
+export const dynamic = "force-dynamic";
+
 export default async function AreasPage() {
   const docs = await getPublishedAreas(200);
   const areas = docs.map(mapAreaDocToArea);

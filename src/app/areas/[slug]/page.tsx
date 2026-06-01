@@ -13,6 +13,7 @@ import { ProsConsSection } from "@/components/areas/ProsConsSection";
 import { AreaLeadForm } from "@/components/areas/AreaLeadForm";
 import { RelatedAreasSection } from "@/components/areas/RelatedAreasSection";
 import { WhatsAppStickyCTA } from "@/components/areas/WhatsAppStickyCTA";
+import { AreaViewTracker } from "@/components/trackers/AreaViewTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -174,6 +175,9 @@ export default async function AreaDetailPage({ params }: { params: Promise<{ slu
 
       {/* WhatsApp Sticky CTA */}
       <WhatsAppStickyCTA areaName={area.name} />
+
+      {/* Analytics */}
+      <AreaViewTracker areaName={area.name} />
 
       {/* JSON-LD Structured Data */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />

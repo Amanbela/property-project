@@ -5,6 +5,7 @@ import { createLead } from "@/actions/lead";
 import { Send, Loader2 } from "lucide-react";
 import { getSessionId } from "@/lib/session";
 import { trackEvent } from "@/actions/track";
+import { trackLeadSubmit } from "@/lib/analytics";
 
 interface AreaLeadFormProps {
   areaName: string;
@@ -52,6 +53,7 @@ export function AreaLeadForm({ areaName }: AreaLeadFormProps) {
       if (res.ok) {
         setSuccess(true);
         setForm({ name: "", phone: "", budget: "" });
+        trackLeadSubmit(areaName);
         if (sessionId) {
           trackEvent({
             sessionId,

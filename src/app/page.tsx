@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, Shield, TrendingUp, Compass, ArrowRight, Target, Sparkles } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 import { getPublishedBlogs } from "@/infrastructure/seo/services/blog-service";
 import { BlogCard } from "@/components/cards/BlogCard";
 import { RecommendationWizard } from "@/features/recommendations/components/RecommendationWizard";

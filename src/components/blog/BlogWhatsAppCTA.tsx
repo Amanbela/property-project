@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MessageSquare, X } from "lucide-react";
 import { getSessionId } from "@/lib/session";
 import { trackEvent } from "@/actions/track";
+import { trackWhatsAppClick } from "@/lib/analytics";
 
 interface Props {
   blogTitle: string;
@@ -23,6 +24,8 @@ export function BlogWhatsAppCTA({ blogTitle, blogSlug }: Props) {
     const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+919999999999";
     const message = `Hi, I read your blog "${blogTitle}". Please suggest best areas in Indore under my budget.`;
     const url = `https://wa.me/${number.replace(/[^0-9+]/g, "")}?text=${encodeURIComponent(message)}`;
+
+    trackWhatsAppClick("blog_detail", blogTitle);
 
     const sessionId = getSessionId();
     if (sessionId) {

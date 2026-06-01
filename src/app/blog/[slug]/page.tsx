@@ -13,6 +13,7 @@ import { BlogWhatsAppCTA } from "@/components/blog/BlogWhatsAppCTA";
 import { RelatedBlogsSection } from "@/components/blog/RelatedBlogsSection";
 import { RelatedAreasSection } from "@/components/blog/RelatedAreasSection";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import { BlogViewTracker } from "@/components/trackers/BlogViewTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -201,6 +202,8 @@ export default async function BlogDetail({ params }: { params: Promise<{ slug: s
 
       {/* WhatsApp Sticky CTA */}
       <BlogWhatsAppCTA blogTitle={blog.title} blogSlug={blog.slug} />
+
+      <BlogViewTracker blogSlug={blog.slug} />
     </>
   );
 }

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getAdminSession } from "@/lib/auth-guard";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 const nav = [
   { href: "/admin/dashboard", label: "Dashboard" },
   { href: "/admin/areas", label: "Areas" },

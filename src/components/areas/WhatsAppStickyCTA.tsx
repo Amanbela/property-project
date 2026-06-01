@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MessageSquare, X } from "lucide-react";
 import { getSessionId } from "@/lib/session";
 import { trackEvent } from "@/actions/track";
+import { trackWhatsAppClick } from "@/lib/analytics";
 
 interface WhatsAppStickyCTAProps {
   areaName: string;
@@ -23,6 +24,8 @@ export function WhatsAppStickyCTA({ areaName, defaultBudget = "my budget" }: Wha
     const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+919999999999";
     const message = `Hi, I am interested in property options in ${areaName}. Please share best colonies under ${defaultBudget}.`;
     const url = `https://wa.me/${number.replace(/[^0-9+]/g, "")}?text=${encodeURIComponent(message)}`;
+
+    trackWhatsAppClick("area_detail", areaName);
 
     const sessionId = getSessionId();
     if (sessionId) {

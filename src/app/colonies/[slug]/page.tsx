@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ColonyRepository } from "@/infrastructure/db/repositories/ColonyRepository";
 import { ScoreRing } from "@/components/ui/ScoreRing";
 import { TrustBadge } from "@/components/ui/TrustBadge";
+import { ColonyViewTracker } from "@/components/trackers/ColonyViewTracker";
+import { CallCtaButton } from "@/components/ui/CallCtaButton";
 import { MapPin, ArrowLeft, Phone, TrendingUp, Users, Home, CheckCircle2, XCircle, ChevronRight } from "lucide-react";
 
 interface Props { params: Promise<{ slug: string }> }
@@ -183,12 +185,7 @@ export default async function ColonyPage({ params }: Props) {
             <div className="card-base border-2 border-brand-100 bg-brand-50/30">
               <h3 className="heading-md mb-2">Interested in {colony.colonyName}?</h3>
               <p className="mb-5 text-sm text-body">Connect with a verified local expert. Get exclusive site visits and off-market deals.</p>
-              <button
-                className="btn-primary w-full py-3 justify-center"
-                aria-label={`Contact expert for ${colony.colonyName}`}
-              >
-                <Phone size={15} /> Request a Site Visit
-              </button>
+              <CallCtaButton colonyName={colony.colonyName} />
               <p className="mt-3 text-center text-xs text-muted">Free service · No hidden charges</p>
             </div>
 
@@ -238,6 +235,8 @@ export default async function ColonyPage({ params }: Props) {
           </Link>
         </div>
       </div>
+
+      <ColonyViewTracker colonyName={colony.colonyName} />
     </>
   );
 }
