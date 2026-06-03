@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "npx tsx src/scripts/seed.ts"
+    "seed": "npx tsx src/scripts/seed.ts",
+    "seed:budget": "npx tsx src/scripts/seed-budget.ts"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +31,7 @@
     "react-markdown": "^10.1.0",
     "recharts": "^2.15.0",
     "remark-gfm": "^4.0.1",
+    "server-only": "^0.0.1",
     "sonner": "^2.0.3",
     "zod": "^3.25.76",
     "zustand": "^5.0.13"

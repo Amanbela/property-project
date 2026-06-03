@@ -1,5 +1,9 @@
-import { connectForWrites } from "@/infrastructure/db/connection";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 import { BudgetRangeModel } from "@/features/budget/models/BudgetRange";
+
+// Load .env.local so process.env.MONGODB_URI is available
+dotenv.config({ path: ".env.local" });
 
 const budgetRanges = [
   {
@@ -13,6 +17,7 @@ const budgetRanges = [
     metaDescription: "Discover budget-friendly areas in Indore under ₹30 Lakh. View top localities, property prices, investment scores, and expert recommendations for affordable housing.",
     whyThisBudget: "This budget range is ideal for first-time homebuyers and small investors looking for affordable entry points in Indore's real estate market. You can find 1-2 BHK flats and small plots in developing corridors with strong growth potential.",
     tipForBuyers: "Focus on areas with upcoming metro connectivity and new infrastructure projects for maximum appreciation.",
+    recommendedAreas: [],
     isActive: true,
     sortOrder: 1,
   },
@@ -27,6 +32,7 @@ const budgetRanges = [
     metaDescription: "Explore mid-range areas in Indore between ₹30–50 Lakh. Compare investment scores, family scores, and find the best locality for your budget.",
     whyThisBudget: "This is one of the most active segments in Indore's property market. You can find 2-3 BHK flats and medium-sized plots in well-established neighborhoods with good schools, hospitals, and connectivity.",
     tipForBuyers: "Look for areas near IT parks and educational hubs — they offer excellent rental yields and resale value.",
+    recommendedAreas: [],
     isActive: true,
     sortOrder: 2,
   },
@@ -41,6 +47,7 @@ const budgetRanges = [
     metaDescription: "Discover premium areas in Indore between ₹50–80 Lakh. View investment scores, family ratings, and property prices in top localities.",
     whyThisBudget: "This budget opens doors to Indore's most sought-after residential corridors. You can find 3 BHK flats, independent floors, and premium plots in areas with top-rated schools, hospitals, and shopping districts.",
     tipForBuyers: "Prioritize areas with low traffic congestion and good metro connectivity for a better lifestyle experience.",
+    recommendedAreas: [],
     isActive: true,
     sortOrder: 3,
   },
@@ -55,6 +62,7 @@ const budgetRanges = [
     metaDescription: "Explore prime areas in Indore between ₹80 Lakh and ₹1 Crore. Compare top localities for investment, family living, and premium amenities.",
     whyThisBudget: "In this range, you can access Indore's most prestigious residential areas. Options include premium 3-4 BHK apartments, luxury villas, and large plots in the city's most desirable neighborhoods with world-class infrastructure.",
     tipForBuyers: "Consider areas close to the proposed metro routes and the Super Corridor — these offer the best long-term appreciation.",
+    recommendedAreas: [],
     isActive: true,
     sortOrder: 4,
   },
@@ -69,6 +77,7 @@ const budgetRanges = [
     metaDescription: "Find luxury areas in Indore between ₹1–1.5 Crore. View elite neighborhoods, premium property options, and investment insights.",
     whyThisBudget: "This budget grants you entry into Indore's most exclusive neighborhoods. You can own luxury villas, premium builder floors, and high-end apartments in areas known for their greenery, low density, and premium social infrastructure.",
     tipForBuyers: "Insist on RERA-approved projects and check the builder's track record before investing in this segment.",
+    recommendedAreas: [],
     isActive: true,
     sortOrder: 5,
   },
@@ -83,29 +92,89 @@ const budgetRanges = [
     metaDescription: "Explore ultra-luxury areas in Indore above ₹1.5 Crore. View elite neighborhoods, premium villas, and high-end investment opportunities.",
     whyThisBudget: "In this ultra-premium segment, you can acquire the finest properties Indore has to offer — luxury villas, penthouses, and large farm plots in the city's most coveted locations with unparalleled amenities and privacy.",
     tipForBuyers: "Work with a local real estate advisor who specializes in luxury properties to find off-market deals and get the best value.",
+    recommendedAreas: [],
     isActive: true,
     sortOrder: 6,
   },
 ];
 
-async function run() {
-  await connectForWrites();
+const MONGO_URI = process.env.MONGODB_URI;
 
-  let count = 0;
-  for (const range of budgetRanges) {
-    await BudgetRangeModel.findOneAndUpdate(
-      { slug: range.slug },
-      { $setOnInsert: range },
-      { upsert: true }
-    );
-    count++;
+async function connectForSeed() {
+  if (!MONGO_URI) {
+    throw new Error("MONGODB_URI is not set in .env.local");
+  }
+  if (mongoose.connection.readyState === 1) return;
+  await mongoose.connect(MONGO_URI);
+}
+
+async function run() {
+  console.log("[seed:budget] Starting budget range seeding...\n");
+
+  // 1. Check MongoDB configuration
+  if (!MONGO_URI) {
+    console.error("[seed:budget] ✘ MONGODB_URI is not set in .env.local");
+    console.error("[seed:budget]   Add MONGODB_URI to your .env.local file and try again.");
+    process.exit(1);
+  }
+  console.log("[seed:budget] ✓ MONGODB_URI is configured");
+
+  // 2. Connect to database
+  try {
+    await connectForSeed();
+    console.log("[seed:budget] ✓ Database connected");
+  } catch (err) {
+    console.error("[seed:budget] ✘ Database connection failed:", (err as Error).message);
+    process.exit(1);
   }
 
-  console.log(`Seeded ${count} budget ranges (skipped existing slugs).`);
+  // 3. Check existing records
+  const existingDocs = await BudgetRangeModel.find({}).select("slug").lean();
+  const existingSlugs = new Set(existingDocs.map((d) => d.slug));
+
+  console.log(`[seed:budget]   Existing records found: ${existingSlugs.size}\n`);
+
+  // 4. Process each budget range
+  let inserted = 0;
+  let skipped = 0;
+
+  for (const range of budgetRanges) {
+    if (existingSlugs.has(range.slug)) {
+      console.log(`  ─ Skipped  "${range.label}" (slug "${range.slug}" already exists)`);
+      skipped++;
+      continue;
+    }
+
+    try {
+      await BudgetRangeModel.create(range);
+      console.log(`  ✓ Inserted "${range.label}" (slug: ${range.slug})`);
+      inserted++;
+    } catch (err) {
+      console.error(`  ✘ Failed to insert "${range.label}":`, (err as Error).message);
+    }
+  }
+
+  // 5. Summary
+  console.log(`\n[seed:budget] ─────────────────────────────`);
+  console.log(`[seed:budget]   Total records in seed:  ${budgetRanges.length}`);
+  console.log(`[seed:budget]   Inserted:               ${inserted}`);
+  console.log(`[seed:budget]   Skipped (already exist): ${skipped}`);
+  console.log(`[seed:budget]   Failed:                 ${budgetRanges.length - inserted - skipped}`);
+  console.log(`[seed:budget] ─────────────────────────────`);
+
+  // 6. Verify final count
+  const totalAfter = await BudgetRangeModel.countDocuments();
+  console.log(`[seed:budget]   Total records in DB:    ${totalAfter}`);
+  console.log(`[seed:budget] ─────────────────────────────`);
+
+  // 7. Disconnect
+  await mongoose.disconnect();
+  console.log("\n[seed:budget] ✓ Database disconnected");
+  console.log("[seed:budget] ✓ Seed complete.");
   process.exit(0);
 }
 
-run().catch((e) => {
-  console.error(e);
+run().catch((err) => {
+  console.error("\n[seed:budget] ✘ Unhandled error:", err);
   process.exit(1);
 });
