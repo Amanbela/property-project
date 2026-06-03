@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, MapPin, Compass, BookOpen, MessageSquare, ChevronRight, TrendingUp, Home } from "lucide-react";
+import { Menu, X, MapPin, Compass, BookOpen, MessageSquare, ChevronRight, TrendingUp, Home, IndianRupee } from "lucide-react";
 
 const navLinks = [
   { href: "/",         label: "Home",            icon: Home },
   { href: "/areas",    label: "Area Insights",   icon: MapPin },
+  { href: "/budget",   label: "Budget Guide",    icon: IndianRupee },
   { href: "/#wizard-section",  label: "Recommendations", icon: Compass },
   { href: "/blog",     label: "Market Insights",  icon: BookOpen },
   { href: "/#contact", label: "Contact",          icon: MessageSquare },

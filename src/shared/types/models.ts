@@ -39,6 +39,27 @@ export function toCloudinaryImage(value: unknown): CloudinaryImage {
   return { imageUrl: "", publicId: "" };
 }
 
+// --- BudgetRange ---
+export const BudgetRangeSchema = z.object({
+  _id: z.string().optional(),
+  label: z.string().min(1, "Label is required"),
+  slug: z.string().min(1, "Slug is required"),
+  minPrice: z.number(),
+  maxPrice: z.number(),
+  description: z.string().default(""),
+  heroHeading: z.string().default(""),
+  metaTitle: z.string().default(""),
+  metaDescription: z.string().default(""),
+  recommendedAreas: z.array(z.string()).default([]),
+  whyThisBudget: z.string().default(""),
+  tipForBuyers: z.string().default(""),
+  isActive: z.boolean().default(true),
+  sortOrder: z.number().default(0),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional()
+});
+export type BudgetRange = z.infer<typeof BudgetRangeSchema>;
+
 export function toCloudinaryImages(value: unknown): CloudinaryImage[] {
   if (!value) return [];
   if (Array.isArray(value)) {
