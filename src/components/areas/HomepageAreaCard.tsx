@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { TrendingUp, Shield, Users, MapPin, ArrowRight } from "lucide-react";
+import { TrendingUp, Shield, Users, MapPin, ArrowRight, BarChart3 } from "lucide-react";
 import type { AreaDoc } from "@/features/colony-intelligence/services/area-service";
 
 interface Props {
   area: AreaDoc;
   badge?: string;
   badgeColor?: string;
+  comparisonSlug?: string;
 }
 
-export function HomepageAreaCard({ area, badge, badgeColor = "bg-brand-500" }: Props) {
+export function HomepageAreaCard({ area, badge, badgeColor = "bg-brand-500", comparisonSlug }: Props) {
   return (
     <Link
       href={`/areas/${area.slug}`}
@@ -72,12 +73,26 @@ export function HomepageAreaCard({ area, badge, badgeColor = "bg-brand-500" }: P
           </span>
         </div>
 
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-xs font-medium text-brand-600 group-hover:underline">
-            Explore Area Intelligence
-          </span>
-          <ArrowRight size={14} className="text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-brand-500" />
-        </div>
+        {comparisonSlug ? (
+          <Link
+            href={`/areas/compare/${comparisonSlug}`}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-3 flex items-center justify-between rounded-xl bg-brand-50 px-3.5 py-2.5 transition-colors hover:bg-brand-100"
+          >
+            <span className="flex items-center gap-1.5 text-xs font-medium text-brand-700">
+              <BarChart3 size={12} />
+              Compare with another area
+            </span>
+            <ArrowRight size={14} className="text-brand-400 transition-all group-hover:translate-x-1" />
+          </Link>
+        ) : (
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-xs font-medium text-brand-600 group-hover:underline">
+              Explore Area Intelligence
+            </span>
+            <ArrowRight size={14} className="text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-brand-500" />
+          </div>
+        )}
       </div>
     </Link>
   );

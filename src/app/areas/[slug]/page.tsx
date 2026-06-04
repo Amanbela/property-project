@@ -12,8 +12,10 @@ import { NearbyFacilitiesSection } from "@/components/areas/NearbyFacilitiesSect
 import { ProsConsSection } from "@/components/areas/ProsConsSection";
 import { AreaLeadForm } from "@/components/areas/AreaLeadForm";
 import { RelatedAreasSection } from "@/components/areas/RelatedAreasSection";
+import { AreaComparisonLinks } from "@/components/areas/AreaComparisonLinks";
 import { WhatsAppStickyCTA } from "@/components/areas/WhatsAppStickyCTA";
 import { AreaViewTracker } from "@/components/trackers/AreaViewTracker";
+import { ComparisonRepository } from "@/infrastructure/db/repositories/ComparisonRepository";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +64,14 @@ export default async function AreaDetailPage({ params }: { params: Promise<{ slu
   if (!data) notFound();
 
   const { area, colonies, relatedAreas } = data;
+
+  const comparisons = (await ComparisonRepository.findByArea(area.id).catch(() => [])) as {
+    slug: string;
+    heroHeading?: string;
+    introText?: string;
+    area1: string | Record<string, unknown>;
+    area2: string | Record<string, unknown>;
+  }[];
 
   const schema = {
     "@context": "https://schema.org",
@@ -170,6 +180,15 @@ export default async function AreaDetailPage({ params }: { params: Promise<{ slu
         {/* Related Areas */}
         {relatedAreas.length > 0 && (
           <RelatedAreasSection areas={relatedAreas} currentSlug={area.slug} />
+        )}
+
+        {/* Comparisons */}
+        {comparisons.length > 0 && (
+          <AreaComparisonLinks
+            comparisons={comparisons}
+            currentAreaSlug={area.slug}
+            currentAreaName={area.name}
+          />
         )}
       </div>
 

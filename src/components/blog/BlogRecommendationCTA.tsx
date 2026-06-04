@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Compass, ArrowRight } from "lucide-react";
+import { Compass, ArrowRight, BarChart3 } from "lucide-react";
 
 export function BlogRecommendationCTA() {
   return (
@@ -18,12 +18,21 @@ export function BlogRecommendationCTA() {
             </p>
           </div>
         </div>
-        <Link
-          href="/#wizard-section"
-          className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-700 hover:shadow-md"
-        >
-          Start Recommendation <ArrowRight size={15} />
-        </Link>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <Link
+            href="/areas/compare"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-brand-200 hover:text-brand-600 hover:shadow-md"
+          >
+            <BarChart3 size={15} />
+            Compare Areas
+          </Link>
+          <Link
+            href="/#wizard-section"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-700 hover:shadow-md"
+          >
+            Start Recommendation <ArrowRight size={15} />
+          </Link>
+        </div>
       </div>
     </section>
   );

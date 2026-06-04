@@ -7,6 +7,8 @@ import { extractImageUrl } from "@/shared/types/models";
 import { HomepageAreaCard } from "@/components/areas/HomepageAreaCard";
 import { AreaLeadForm } from "@/components/areas/AreaLeadForm";
 import { WhatsAppStickyCTA } from "@/components/areas/WhatsAppStickyCTA";
+import { BudgetComparisonLinks } from "@/components/comparisons/BudgetComparisonLinks";
+import { ComparisonRepository } from "@/infrastructure/db/repositories/ComparisonRepository";
 import { ArrowRight, IndianRupee, Lightbulb, Info } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -113,6 +115,17 @@ export default async function BudgetRangeDetailPage({ params }: { params: Promis
     .filter((a): a is Record<string, unknown> => a !== null && a !== undefined)
     .map((a) => toAreaCardData(a));
 
+  const areaIds = areas.map((a) => a._id ?? "").filter(Boolean);
+  const budgetComparisons = areaIds.length > 0
+    ? (await ComparisonRepository.findByAreaIdList(areaIds).catch(() => [])) as {
+        slug: string;
+        heroHeading?: string;
+        introText?: string;
+        area1: string | Record<string, unknown>;
+        area2: string | Record<string, unknown>;
+      }[]
+    : [];
+
   const schema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -212,6 +225,11 @@ export default async function BudgetRangeDetailPage({ params }: { params: Promis
               ))}
             </div>
           </section>
+        )}
+
+        {/* Budget Comparisons */}
+        {budgetComparisons.length > 0 && (
+          <BudgetComparisonLinks comparisons={budgetComparisons} />
         )}
 
         {/* Lead Form */}

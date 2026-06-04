@@ -1,0 +1,1 @@
+export { AreaComparisonModel } from "./AreaComparison";
