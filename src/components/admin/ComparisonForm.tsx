@@ -74,14 +74,13 @@ export function ComparisonForm({ areas, initialData, isEdit }: ComparisonFormPro
     keyDifferences: (initialData?.keyDifferences as { parameter: string; area1Value: string; area2Value: string }[]) || [],
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const {
     register,
     handleSubmit,
     formState: { errors },
     control,
     watch,
-  } = useForm<any>({
+  } = useForm<z.input<typeof comparisonFormSchema>>({
     resolver: zodResolver(comparisonFormSchema),
     defaultValues,
   });
@@ -136,8 +135,7 @@ export function ComparisonForm({ areas, initialData, isEdit }: ComparisonFormPro
   const [metaTitle, setMetaTitle] = useState<string>(defaultValues.metaTitle as string || "");
   const [metaDesc, setMetaDesc] = useState<string>(defaultValues.metaDescription as string || "");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: z.input<typeof comparisonFormSchema>) => {
     if (data.area1 === data.area2) {
       toast.error("Area 1 and Area 2 must be different");
       return;
