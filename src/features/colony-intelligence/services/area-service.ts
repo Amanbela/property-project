@@ -293,6 +293,7 @@ export async function getAreaDetailData(slug: string): Promise<AreaDetailData | 
       _id: String(c._id),
       colonyName: c.colonyName,
       slug: c.slug,
+      areaId: String(c.areaId ?? areaId),
       areaName: c.areaName ?? area.name,
       averagePlotPrice: c.averagePlotPrice ?? 0,
       averageFlatPrice: c.averageFlatPrice ?? 0,

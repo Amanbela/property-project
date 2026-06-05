@@ -5,6 +5,7 @@ import { z } from "zod";
 import { connectForWrites } from "@/infrastructure/db/connection";
 import { getAdminSession } from "@/lib/auth-guard";
 import { ColonyModel } from "@/features/colony-intelligence/models/Colony";
+import { AreaModel } from "@/features/colony-intelligence/models/Area";
 import { slugify } from "@/utils/slug";
 import { deleteImage, deleteMultipleImages } from "@/lib/cloudinary";
 
@@ -16,7 +17,8 @@ const cloudinaryImageSchema = z.object({
 const colonySchema = z.object({
   colonyName: z.string().min(2),
   slug: z.string().optional(),
-  areaName: z.string().min(2),
+  areaId: z.string().min(1, "Area is required"),
+  areaName: z.string(),
   averagePlotPrice: z.coerce.number().min(0),
   averageFlatPrice: z.coerce.number().min(0),
   builderName: z.string().optional(),
@@ -58,10 +60,17 @@ export async function createColony(data: Record<string, unknown>) {
 
   try {
     await connectForWrites();
+
+    const area = await AreaModel.findById(parsed.data.areaId).select("name").lean();
+    if (!area) {
+      return { ok: false as const, error: "Selected area not found" };
+    }
+
     const { lat, lng, ...rest } = parsed.data;
-    await ColonyModel.create({ 
-      ...rest, 
+    await ColonyModel.create({
+      ...rest,
       slug,
+      areaName: area.name,
       geoLocation: { lat, lng }
     });
     revalidatePath("/colonies");
@@ -82,10 +91,17 @@ export async function updateColony(id: string, data: Record<string, unknown>) {
 
   try {
     await connectForWrites();
+
+    const area = await AreaModel.findById(parsed.data.areaId).select("name").lean();
+    if (!area) {
+      return { ok: false as const, error: "Selected area not found" };
+    }
+
     const { lat, lng, ...rest } = parsed.data;
-    await ColonyModel.findByIdAndUpdate(id, { 
-      ...rest, 
+    await ColonyModel.findByIdAndUpdate(id, {
+      ...rest,
       slug,
+      areaName: area.name,
       geoLocation: { lat, lng }
     }).exec();
     revalidatePath("/colonies");
@@ -108,8 +124,17 @@ export async function deleteColony(id: string) {
     if (publicIds.length > 0) {
       await deleteMultipleImages(publicIds);
     }
+
+    const areaId = colony.areaId?.toString();
+    if (areaId) {
+      await AreaModel.findByIdAndUpdate(areaId, {
+        $pull: { suggestedColonies: id }
+      }).exec();
+    }
   }
+
   await ColonyModel.findByIdAndDelete(id).exec();
+
   revalidatePath("/colonies");
   revalidatePath("/admin/colonies");
   return { ok: true as const };

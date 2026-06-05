@@ -29,6 +29,11 @@ const ColonySchema = new Schema(
       index: true
     },
 
+    areaName: {
+      type: String,
+      default: ""
+    },
+
     // Pricing
     averagePlotPrice: {
       type: Number,

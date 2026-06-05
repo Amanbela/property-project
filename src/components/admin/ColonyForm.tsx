@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { useForm, Controller } from "react-hook-form";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useForm, Controller, useController } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ColonySchema, type Colony } from "@/shared/types/models";
 import { 
@@ -19,8 +19,14 @@ import { MultiImageUploader } from "./MultiImageUploader";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createColony, updateColony } from "@/actions/admin-colonies";
-import { Save, ArrowLeft, Loader2, Sparkles, MapPin, Building2, ShieldCheck, Image as ImageIcon } from "lucide-react";
+import { Save, ArrowLeft, Loader2, Sparkles, MapPin, Building2, ShieldCheck, Image as ImageIcon, Check, ChevronsUpDown, X, Search } from "lucide-react";
 import Link from "next/link";
+
+interface AreaOption {
+  _id: string;
+  name: string;
+  slug: string;
+}
 
 interface ColonyFormProps {
   initialData?: Partial<Colony>;
@@ -30,12 +36,18 @@ interface ColonyFormProps {
 export function ColonyForm({ initialData, isEdit }: ColonyFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [areas, setAreas] = useState<AreaOption[]>([]);
+  const [areasLoading, setAreasLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     control,
+    setValue,
     watch,
   } = useForm({
     resolver: zodResolver(ColonySchema),
@@ -56,6 +68,55 @@ export function ColonyForm({ initialData, isEdit }: ColonyFormProps) {
       images: [],
     },
   });
+
+  const { field: areaIdField } = useController({
+    control,
+    name: "areaId",
+    defaultValue: initialData?.areaId ?? "",
+  });
+
+  const selectedArea = areas.find((a) => a._id === areaIdField.value);
+  const selectedAreaName = selectedArea?.name ?? initialData?.areaName ?? "";
+
+  useEffect(() => {
+    fetch("/api/areas")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setAreas(data);
+      })
+      .catch(() => {})
+      .finally(() => setAreasLoading(false));
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredAreas = areas.filter((a) =>
+    a.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSelect = useCallback(
+    (area: AreaOption) => {
+      areaIdField.onChange(area._id);
+      setValue("areaName", area.name);
+      setDropdownOpen(false);
+      setSearchQuery("");
+    },
+    [areaIdField, setValue]
+  );
+
+  const handleClear = useCallback(() => {
+    areaIdField.onChange("");
+    setValue("areaName", "");
+    setSearchQuery("");
+  }, [areaIdField, setValue]);
 
   const onSubmit = async (data: Colony) => {
     setIsSubmitting(true);
@@ -119,13 +180,85 @@ export function ColonyForm({ initialData, isEdit }: ColonyFormProps) {
                 errors={errors}
                 required
               />
-              <InputField
-                label="Area Name"
-                name="areaName"
-                register={register}
-                errors={errors}
-                required
-              />
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Area<span className="text-red-500">*</span>
+                </label>
+                <div className="relative" ref={dropdownRef}>
+                  <div
+                    className={`flex items-center w-full px-4 py-2.5 bg-white dark:bg-slate-800 border rounded-xl text-sm transition-all cursor-pointer ${
+                      errors.areaId ? "border-red-500 bg-red-50 dark:bg-red-900/10" : "border-slate-200 dark:border-slate-700"
+                    }`}
+                    onClick={() => !areasLoading && setDropdownOpen(!dropdownOpen)}
+                  >
+                    {areasLoading ? (
+                      <span className="text-slate-400 flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin" />
+                        Loading areas...
+                      </span>
+                    ) : selectedAreaName ? (
+                      <span className="flex-1 text-slate-900 dark:text-slate-100">{selectedAreaName}</span>
+                    ) : (
+                      <span className="flex-1 text-slate-400">Select area</span>
+                    )}
+                    {selectedAreaName && !areasLoading ? (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleClear(); }}
+                        className="p-0.5 text-slate-400 hover:text-slate-600"
+                      >
+                        <X size={16} />
+                      </button>
+                    ) : null}
+                    <ChevronsUpDown size={16} className="text-slate-400 ml-1 shrink-0" />
+                  </div>
+
+                  {dropdownOpen && (
+                    <div className="absolute z-20 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
+                      <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-700">
+                        <Search size={16} className="text-slate-400 shrink-0" />
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search areas..."
+                          className="flex-1 bg-transparent text-sm outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredAreas.length === 0 ? (
+                          <p className="px-4 py-6 text-sm text-slate-400 text-center">
+                            {areas.length === 0 ? "No areas available. Create areas first." : "No areas found."}
+                          </p>
+                        ) : (
+                          filteredAreas.map((area) => (
+                            <button
+                              type="button"
+                              key={area._id}
+                              onClick={() => handleSelect(area)}
+                              className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${
+                                areaIdField.value === area._id ? "bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 font-medium" : "text-slate-700 dark:text-slate-300"
+                              }`}
+                            >
+                              <Check
+                                size={16}
+                                className={`shrink-0 ${
+                                  areaIdField.value === area._id ? "opacity-100 text-brand-600" : "opacity-0"
+                                }`}
+                              />
+                              {area.name}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {errors.areaId && (
+                  <p className="text-xs text-red-500 font-medium">{errors.areaId?.message as string}</p>
+                )}
+              </div>
               <InputField
                 label="Builder Name"
                 name="builderName"

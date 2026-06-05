@@ -11,7 +11,11 @@ export class ColonyRepository {
     const docs = await ColonyModel.find({}).sort({ updatedAt: -1 }).lean().exec();
     
     return docs.map(doc => {
-      const parsed = ColonySchema.safeParse({ ...doc, _id: doc._id?.toString() });
+      const parsed = ColonySchema.safeParse({
+        ...doc,
+        _id: doc._id?.toString(),
+        areaId: doc.areaId?.toString()
+      });
       if (!parsed.success) {
         console.warn(`Validation failed for Colony ${doc.colonyName}`, parsed.error);
         return null;
@@ -27,7 +31,11 @@ export class ColonyRepository {
     await connectForWrites();
     const doc = await ColonyModel.findById(id).lean().exec();
     if (!doc) return null;
-    const parsed = ColonySchema.safeParse({ ...doc, _id: doc._id?.toString() });
+    const parsed = ColonySchema.safeParse({
+      ...doc,
+      _id: doc._id?.toString(),
+      areaId: doc.areaId?.toString()
+    });
     return parsed.success ? parsed.data : null;
   }
 
@@ -40,7 +48,11 @@ export class ColonyRepository {
     
     if (!doc) return null;
     
-    const parsed = ColonySchema.safeParse({ ...doc, _id: doc._id?.toString() });
+    const parsed = ColonySchema.safeParse({
+      ...doc,
+      _id: doc._id?.toString(),
+      areaId: doc.areaId?.toString()
+    });
     if (!parsed.success) {
       console.error(`Validation failed for Colony slug: ${slug}`, parsed.error);
       return null;
@@ -49,12 +61,16 @@ export class ColonyRepository {
   }
 
   /**
-   * Find by Area
+   * Find colonies by Area ID
    */
-  static async findByArea(areaName: string): Promise<Colony[]> {
+  static async findByArea(areaId: string): Promise<Colony[]> {
     await connectForWrites();
-    const docs = await ColonyModel.find({ areaName, published: true }).lean().exec();
-    return docs.map(doc => ColonySchema.parse({ ...doc, _id: doc._id?.toString() }));
+    const docs = await ColonyModel.find({ areaId, published: true }).lean().exec();
+    return docs.map(doc => ColonySchema.parse({
+      ...doc,
+      _id: doc._id?.toString(),
+      areaId: doc.areaId?.toString()
+    }));
   }
 
   /**
