@@ -60,20 +60,22 @@ export const InputField: React.FC<BaseFieldProps & { type?: string }> = ({
   type = "text",
   className = "",
   placeholder,
-}) => (
-  <div className={`space-y-1.5 ${className}`}>
-    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{label}{required && "*"}</label>
-    <input
-      type={type}
-      placeholder={placeholder}
-      {...register(name, { required })}
+}) => {
+  return (
+    <div className={`space-y-1.5 ${className}`}>
+      <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{label}{required && "*"}</label>
+      <input
+        type={type}
+        placeholder={placeholder}
+        {...register(name, { required, ...(type === "number" ? { valueAsNumber: true } : {}) })}
       className={`w-full px-4 py-2.5 bg-white dark:bg-slate-800 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 dark:text-slate-100 ${
         errors[name] ? "border-red-500 bg-red-50 dark:bg-red-900/10" : "border-slate-200 dark:border-slate-700"
       }`}
     />
     {errors[name] && <p className="text-xs text-red-500 font-medium">{errors[name]?.message as string}</p>}
   </div>
-);
+  );
+};
 
 export const TextAreaField: React.FC<BaseFieldProps & { rows?: number }> = ({
   label,

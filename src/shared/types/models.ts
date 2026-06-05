@@ -2,8 +2,8 @@ import { z } from "zod";
 
 // --- Shared Types ---
 export const GeoLocationSchema = z.object({
-  lat: z.number(),
-  lng: z.number()
+  lat: z.coerce.number(),
+  lng: z.coerce.number()
 });
 
 export const FAQSchema = z.object({
@@ -89,20 +89,20 @@ export const AreaSchema = z.object({
   description: z.string().optional(),
 
   // Pricing
-  averagePrice: z.number().default(0),
-  averagePricePerSqft: z.number().default(0),
+  averagePrice: z.coerce.number().default(0),
+  averagePricePerSqft: z.coerce.number().default(0),
   budgetCategory: z.array(BudgetCategoryEnum).default([]),
 
   // Property
   propertyTypes: z.array(PropertyTypeEnum).default([]),
 
   // Recommendation Scores (0-100)
-  investmentScore: z.number().min(0).max(100).default(0),
-  familyScore: z.number().min(0).max(100).default(0),
-  rentalDemand: z.number().min(0).max(100).default(0),
-  futureGrowth: z.number().min(0).max(100).default(0),
-  trafficScore: z.number().min(0).max(100).default(0),
-  trafficCondition: z.number().default(0),
+  investmentScore: z.coerce.number().min(0).max(100).default(0),
+  familyScore: z.coerce.number().min(0).max(100).default(0),
+  rentalDemand: z.coerce.number().min(0).max(100).default(0),
+  futureGrowth: z.coerce.number().min(0).max(100).default(0),
+  trafficScore: z.coerce.number().min(0).max(100).default(0),
+  trafficCondition: z.coerce.number().default(0),
 
   // Tags
   tags: z.array(z.string()).default([]),
@@ -110,9 +110,9 @@ export const AreaSchema = z.object({
 
   // Connectivity
   connectivity: z.object({
-    metroDistanceKm: z.number().default(0),
-    airportDistanceKm: z.number().default(0),
-    railwayDistanceKm: z.number().default(0),
+    metroDistanceKm: z.coerce.number().default(0),
+    airportDistanceKm: z.coerce.number().default(0),
+    railwayDistanceKm: z.coerce.number().default(0),
   }).optional(),
 
   // Nearby Facilities
@@ -120,7 +120,7 @@ export const AreaSchema = z.object({
   nearbyHospitals: z.array(z.string()).default([]),
   nearbyMalls: z.array(z.string()).default([]),
   nearbyITHubs: z.array(z.string()).default([]),
-  nearbyMetro: z.boolean().default(false),
+  nearbyMetro: z.coerce.boolean().default(false),
 
   // Location
   coordinates: GeoLocationSchema.optional(),
@@ -141,9 +141,9 @@ export const AreaSchema = z.object({
   seoDescription: z.string().optional(),
 
   // Status
-  published: z.boolean().default(true),
-  featured: z.boolean().default(false),
-  viewCount: z.number().default(0),
+  published: z.coerce.boolean().default(true),
+  featured: z.coerce.boolean().default(false),
+  viewCount: z.coerce.number().default(0),
 
   // Timestamps
   createdAt: z.date().optional(),
