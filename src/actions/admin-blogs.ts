@@ -1,65 +1,43 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { connectForWrites } from "@/infrastructure/db/connection";
 import { getAdminSession } from "@/lib/auth-guard";
 import { BlogModel } from "@/infrastructure/seo/models/Blog";
+import { BlogSchema } from "@/shared/types/models";
 import { slugify } from "@/utils/slug";
 import { deleteImage } from "@/lib/cloudinary";
-
-const cloudinaryImageSchema = z.union([
-  z.object({ imageUrl: z.string(), publicId: z.string() }),
-  z.string()
-]).transform((val) =>
-  typeof val === "string" ? { imageUrl: val, publicId: "" } : val
-);
-
-const blogSchema = z.object({
-  title: z.string().min(2),
-  slug: z.string().optional(),
-  excerpt: z.string().optional(),
-  content: z.string().optional(),
-  category: z.string().optional(),
-  featuredImage: cloudinaryImageSchema.optional().default({ imageUrl: "", publicId: "" }),
-  seoTitle: z.string().optional(),
-  seoDescription: z.string().optional(),
-  keywords: z.array(z.string()),
-  schemaType: z.string().optional(),
-  status: z.enum(["draft", "published"]),
-  relatedSlugs: z.array(z.string())
-});
 
 async function assertAdmin() {
   const s = await getAdminSession();
   return !!(s?.user?.email && s.user.role === "admin");
 }
 
-export async function createBlog(_prev: unknown, formData: FormData) {
+async function ensureUniqueSlug(baseSlug: string, excludeId?: string): Promise<string> {
+  let slug = baseSlug;
+  let counter = 1;
+  // eslint-disable-next-line no-await-in-loop
+  while (await BlogModel.findOne({ slug, ...(excludeId ? { _id: { $ne: excludeId } } : {}) }).exec()) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+  return slug;
+}
+
+export async function createBlog(data: Record<string, unknown>) {
   if (!(await assertAdmin())) return { ok: false as const, error: "Unauthorized" };
-  const raw = Object.fromEntries(formData.entries());
-  const keywords = formData.getAll("keywords").map(String).filter(Boolean);
-  const related = formData.getAll("relatedSlugs").map(String).filter(Boolean);
-  const split = (v: unknown) => String(v ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-  const parsed = blogSchema.safeParse({
-    title: raw.title,
-    slug: raw.slug || undefined,
-    excerpt: raw.excerpt || "",
-    content: raw.content || "",
-    category: raw.category || "",
-    featuredImage: raw.featuredImage || "",
-    seoTitle: raw.seoTitle || "",
-    seoDescription: raw.seoDescription || "",
-    keywords: keywords.length ? keywords : split(raw.keywordsCsv),
-    schemaType: raw.schemaType || "Article",
-    status: raw.status === "published" ? "published" : "draft",
-    relatedSlugs: related.length ? related : split(raw.relatedSlugsCsv)
-  });
-  if (!parsed.success) return { ok: false as const, error: parsed.error.flatten().fieldErrors };
-  const slug = parsed.data.slug?.length ? slugify(parsed.data.slug) : slugify(parsed.data.title);
+
+  const parsed = BlogSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+  }
+
   try {
     await connectForWrites();
-    await BlogModel.create({ ...parsed.data, slug });
+    const slug = await ensureUniqueSlug(slugify(parsed.data.slug || parsed.data.title));
+    const { _id, createdAt, updatedAt, ...rest } = parsed.data;
+    await BlogModel.create({ ...rest, slug });
     revalidatePath("/blog");
     revalidatePath("/admin/blogs");
     revalidatePath("/");
@@ -69,33 +47,22 @@ export async function createBlog(_prev: unknown, formData: FormData) {
   }
 }
 
-export async function updateBlog(id: string, _prev: unknown, formData: FormData) {
+export async function updateBlog(id: string, data: Record<string, unknown>) {
   if (!(await assertAdmin())) return { ok: false as const, error: "Unauthorized" };
-  const raw = Object.fromEntries(formData.entries());
-  const keywords = formData.getAll("keywords").map(String).filter(Boolean);
-  const related = formData.getAll("relatedSlugs").map(String).filter(Boolean);
-  const split = (v: unknown) => String(v ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-  const parsed = blogSchema.safeParse({
-    title: raw.title,
-    slug: raw.slug || undefined,
-    excerpt: raw.excerpt || "",
-    content: raw.content || "",
-    category: raw.category || "",
-    featuredImage: raw.featuredImage || "",
-    seoTitle: raw.seoTitle || "",
-    seoDescription: raw.seoDescription || "",
-    keywords: keywords.length ? keywords : split(raw.keywordsCsv),
-    schemaType: raw.schemaType || "Article",
-    status: raw.status === "published" ? "published" : "draft",
-    relatedSlugs: related.length ? related : split(raw.relatedSlugsCsv)
-  });
-  if (!parsed.success) return { ok: false as const, error: parsed.error.flatten().fieldErrors };
-  const slug = parsed.data.slug?.length ? slugify(parsed.data.slug) : slugify(parsed.data.title);
+
+  const parsed = BlogSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.flatten().fieldErrors };
+  }
+
   try {
     await connectForWrites();
-    await BlogModel.findByIdAndUpdate(id, { ...parsed.data, slug }).exec();
+    const slug = await ensureUniqueSlug(slugify(parsed.data.slug || parsed.data.title), id);
+    const { _id, createdAt, updatedAt, ...rest } = parsed.data;
+    await BlogModel.findByIdAndUpdate(id, { ...rest, slug }).exec();
     revalidatePath("/blog");
-    revalidatePath(`/blog/${slug}`);
+    revalidatePath("/blog/" + slug);
     revalidatePath("/admin/blogs");
     revalidatePath("/");
     return { ok: true as const };
