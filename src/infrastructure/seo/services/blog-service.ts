@@ -64,22 +64,37 @@ export async function getPublishedBlogs(limit?: number): Promise<BlogDoc[]> {
 export async function getBlogBySlug(slug: string): Promise<BlogDoc | null> {
   if (!isMongoConfigured()) return null;
   await connectDB();
-  const doc = await BlogModel.findOne({ slug, status: "published" }).lean();
-  return toPublic(doc as Record<string, unknown> | null);
+  try {
+    const doc = await BlogModel.findOne({ slug, status: "published" }).lean();
+    return toPublic(doc as Record<string, unknown> | null);
+  } catch (err) {
+    console.error("getBlogBySlug error:", err);
+    return null;
+  }
 }
 
 export async function getBlogBySlugAdmin(slug: string) {
   if (!isMongoConfigured()) return null;
   await connectDB();
-  const doc = await BlogModel.findOne({ slug }).lean();
-  return toPublic(doc as Record<string, unknown> | null);
+  try {
+    const doc = await BlogModel.findOne({ slug }).lean();
+    return toPublic(doc as Record<string, unknown> | null);
+  } catch (err) {
+    console.error("getBlogBySlugAdmin error:", err);
+    return null;
+  }
 }
 
 export async function getBlogById(id: string) {
   if (!isMongoConfigured()) return null;
   await connectDB();
-  const doc = await BlogModel.findById(id).lean();
-  return toPublic(doc as Record<string, unknown> | null);
+  try {
+    const doc = await BlogModel.findById(id).lean();
+    return toPublic(doc as Record<string, unknown> | null);
+  } catch (err) {
+    console.error("getBlogById error:", err);
+    return null;
+  }
 }
 
 export async function listBlogsAdmin(params: {
