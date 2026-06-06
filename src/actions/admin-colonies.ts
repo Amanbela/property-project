@@ -14,6 +14,12 @@ const cloudinaryImageSchema = z.object({
   publicId: z.string()
 });
 
+const verificationChecklistSchema = z.object({
+  legalApproved: z.boolean().default(false),
+  reraApproved: z.boolean().default(false),
+  possessionVerified: z.boolean().default(false),
+}).default({});
+
 const colonySchema = z.object({
   colonyName: z.string().min(2),
   slug: z.string().optional(),
@@ -36,9 +42,13 @@ const colonySchema = z.object({
   pros: z.array(z.string()),
   cons: z.array(z.string()),
   description: z.string().optional(),
-  lat: z.coerce.number().optional(),
-  lng: z.coerce.number().optional(),
+  geoLocation: z.object({
+    lat: z.coerce.number().optional(),
+    lng: z.coerce.number().optional(),
+  }).optional(),
   images: z.array(cloudinaryImageSchema),
+  faqs: z.array(z.object({ question: z.string(), answer: z.string() })).default([]),
+  verificationChecklist: verificationChecklistSchema,
   published: z.boolean(),
 });
 
@@ -66,12 +76,14 @@ export async function createColony(data: Record<string, unknown>) {
       return { ok: false as const, error: "Selected area not found" };
     }
 
-    const { lat, lng, ...rest } = parsed.data;
+    const { geoLocation, verificationChecklist, faqs, ...rest } = parsed.data;
     await ColonyModel.create({
       ...rest,
       slug,
       areaName: area.name,
-      geoLocation: { lat, lng }
+      geoLocation,
+      faqs,
+      verificationChecklist
     });
     revalidatePath("/colonies");
     revalidatePath("/admin/colonies");
@@ -97,12 +109,14 @@ export async function updateColony(id: string, data: Record<string, unknown>) {
       return { ok: false as const, error: "Selected area not found" };
     }
 
-    const { lat, lng, ...rest } = parsed.data;
+    const { geoLocation, verificationChecklist, faqs, ...rest } = parsed.data;
     await ColonyModel.findByIdAndUpdate(id, {
       ...rest,
       slug,
       areaName: area.name,
-      geoLocation: { lat, lng }
+      geoLocation,
+      faqs,
+      verificationChecklist
     }).exec();
     revalidatePath("/colonies");
     revalidatePath(`/colonies/${slug}`);

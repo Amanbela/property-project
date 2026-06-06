@@ -1,11 +1,27 @@
+"use client";
+
+import { useFormState, useFormStatus } from "react-dom";
 import { updateSeoPage } from "@/actions/admin-seo-pages";
 import type { SeoPageDoc } from "@/infrastructure/seo/services/seo-page-service";
 
+type FormState = { ok?: boolean; error?: string | Record<string, string[]> } | null;
+const initial: FormState = null;
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" disabled={pending} className="rounded-full bg-slate-900 px-5 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-white dark:text-slate-900">
+      {pending ? "Saving…" : "Save"}
+    </button>
+  );
+}
+
 export function SeoPageEditForm({ page }: { page: SeoPageDoc }) {
-  const action = updateSeoPage.bind(null, page.id);
+  const bound = updateSeoPage.bind(null, page.id);
+  const [state, formAction] = useFormState(bound, initial);
 
   return (
-    <form action={action} className="glass-panel space-y-3 rounded-3xl p-6">
+    <form action={formAction} className="glass-panel space-y-3 rounded-3xl p-6">
       <div className="grid gap-3 md:grid-cols-2">
         <label className="text-sm">
           Slug *
@@ -51,9 +67,9 @@ export function SeoPageEditForm({ page }: { page: SeoPageDoc }) {
           <textarea name="faqSchemaJson" rows={4} defaultValue={page.faqSchemaJson ?? ""} className="focus-ring mt-1 w-full rounded-xl border px-3 py-2 font-mono text-xs dark:bg-slate-950" />
         </label>
       </div>
-      <button type="submit" className="rounded-full bg-slate-900 px-5 py-2 text-sm text-white dark:bg-white dark:text-slate-900">
-        Save
-      </button>
+      <SubmitButton />
+      {state?.ok === true && <p className="text-sm text-green-600">Saved.</p>}
+      {state?.error && <p className="text-sm text-red-600">{typeof state.error === "string" ? state.error : JSON.stringify(state.error)}</p>}
     </form>
   );
 }

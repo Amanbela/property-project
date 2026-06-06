@@ -1,8 +1,25 @@
+"use client";
+
+import { useFormState, useFormStatus } from "react-dom";
 import { createSeoPage } from "@/actions/admin-seo-pages";
 
-export function SeoPageCreateForm() {
+type FormState = { ok?: boolean; error?: string | Record<string, string[]> } | null;
+const initial: FormState = null;
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
   return (
-    <form action={createSeoPage} className="glass-panel space-y-3 rounded-3xl p-6">
+    <button type="submit" disabled={pending} className="rounded-full bg-slate-900 px-5 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-white dark:text-slate-900">
+      {pending ? "Creating…" : "Create"}
+    </button>
+  );
+}
+
+export function SeoPageCreateForm() {
+  const [state, formAction] = useFormState(createSeoPage, initial);
+
+  return (
+    <form action={formAction} className="glass-panel space-y-3 rounded-3xl p-6">
       <div className="grid gap-3 md:grid-cols-2">
         <label className="text-sm">
           Slug *
@@ -60,9 +77,9 @@ export function SeoPageCreateForm() {
           <textarea name="faqSchemaJson" rows={4} className="focus-ring mt-1 w-full rounded-xl border px-3 py-2 font-mono text-xs dark:bg-slate-950" />
         </label>
       </div>
-      <button type="submit" className="rounded-full bg-slate-900 px-5 py-2 text-sm text-white dark:bg-white dark:text-slate-900">
-        Create
-      </button>
+      <SubmitButton />
+      {state?.ok === true && <p className="text-sm text-green-600">Created.</p>}
+      {state?.error && <p className="text-sm text-red-600">{typeof state.error === "string" ? state.error : JSON.stringify(state.error)}</p>}
     </form>
   );
 }
