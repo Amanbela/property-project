@@ -1,5 +1,6 @@
+import Link from "next/link";
 import type { Colony } from "@/shared/types/models";
-import { TrendingUp, Home, Shield, MapPin } from "lucide-react";
+import { TrendingUp, Home, Shield, MapPin, ArrowRight } from "lucide-react";
 
 interface SuggestedColoniesSectionProps {
   colonies: Colony[];
@@ -27,9 +28,10 @@ export function SuggestedColoniesSection({ colonies, areaName }: SuggestedColoni
       <h2 className="heading-md mb-6 text-slate-900">Popular Colonies in {areaName}</h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {colonies.map((colony) => (
-          <div
+          <Link
             key={colony._id}
-            className="group rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-brand-200 hover:shadow-md"
+            href={`/colonies/${colony.slug}`}
+            className="group block cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-brand-200 hover:shadow-md"
           >
             <div className="mb-3 flex items-start justify-between">
               <div>
@@ -37,7 +39,7 @@ export function SuggestedColoniesSection({ colonies, areaName }: SuggestedColoni
                   <MapPin size={10} className="text-slate-400" />
                   {areaName}
                 </span>
-                <h3 className="font-display text-lg font-bold text-slate-900">
+                <h3 className="font-display text-lg font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
                   {colony.colonyName}
                 </h3>
               </div>
@@ -81,7 +83,11 @@ export function SuggestedColoniesSection({ colonies, areaName }: SuggestedColoni
                 ))}
               </div>
             )}
-          </div>
+
+            <div className="mt-4 flex items-center gap-1 text-xs font-medium text-brand-600 opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-1">
+              View Colony Details <ArrowRight size={13} />
+            </div>
+          </Link>
         ))}
       </div>
     </section>

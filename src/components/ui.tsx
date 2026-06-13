@@ -37,26 +37,28 @@ export function Footer() {
 
 export function AreaCard({ area }: { area: Area }) {
   return (
-    <motion.article
-      whileHover={{ y: -5, scale: 1.01 }}
-      transition={{ duration: 0.2 }}
-      className="glass-panel rounded-3xl p-5 md:p-6"
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold tracking-tight">{area.name}</h3>
-        <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
-          Score {area.investmentScore}/100
-        </span>
-      </div>
-      <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{area.description}</p>
-      <div className="mt-4 space-y-1 text-sm">
-        <p>Avg price: ₹{area.averagePrice.toLocaleString()}/sq.ft</p>
-        <p className="text-slate-600 dark:text-slate-300">Investment: {area.investmentScore}/100 · Rental: {area.rentalDemand}/100</p>
-      </div>
-      <Link href={`/areas/${area.slug}`} className="mt-5 inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-medium transition-all hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:hover:border-blue-400">
+    <Link href={`/areas/${area.slug}`} className="block cursor-pointer">
+      <motion.article
+        whileHover={{ y: -5, scale: 1.01 }}
+        transition={{ duration: 0.2 }}
+        className="glass-panel rounded-3xl p-5 md:p-6"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold tracking-tight">{area.name}</h3>
+          <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
+            Score {area.investmentScore}/100
+          </span>
+        </div>
+        <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{area.description}</p>
+        <div className="mt-4 space-y-1 text-sm">
+          <p>Avg price: ₹{area.averagePrice.toLocaleString()}/sq.ft</p>
+          <p className="text-slate-600 dark:text-slate-300">Investment: {area.investmentScore}/100 · Rental: {area.rentalDemand}/100</p>
+        </div>
+        <Link href={`/areas/${area.slug}`} className="mt-5 inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-medium transition-all hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:hover:border-blue-400">
         View Area Intelligence
-      </Link>
-    </motion.article>
+        </Link>
+      </motion.article>
+    </Link>
   );
 }
 
