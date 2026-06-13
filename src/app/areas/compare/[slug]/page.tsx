@@ -5,6 +5,7 @@ import { connectDB, isMongoConfigured } from "@/infrastructure/db/connection";
 import { AreaModel } from "@/features/colony-intelligence/models/Area";
 import { AreaComparisonModel } from "@/features/comparisons/models/AreaComparison";
 import { getCanonical } from "@/lib/seo";
+import type { AreaDoc } from "@/features/colony-intelligence/services/area-service";
 import { ComparisonHero } from "@/components/comparisons/ComparisonHero";
 import { ScoreComparisonSection } from "@/components/comparisons/ScoreComparisonSection";
 import { KeyDifferencesSection } from "@/components/comparisons/KeyDifferencesSection";
@@ -74,8 +75,10 @@ export default async function ComparisonDetailPage({ params }: { params: Promise
 
   if (!comparison) notFound();
 
-  const area1 = comparison.area1 as unknown as Record<string, unknown>;
-  const area2 = comparison.area2 as unknown as Record<string, unknown>;
+  const area1 = comparison.area1 as unknown as Record<string, unknown> | null;
+  const area2 = comparison.area2 as unknown as Record<string, unknown> | null;
+
+  if (!area1 || !area2) notFound();
 
   const area1Name = (area1.name as string) || "";
   const area1Slug = (area1.slug as string) || "";
@@ -83,7 +86,7 @@ export default async function ComparisonDetailPage({ params }: { params: Promise
   const area2Slug = (area2.slug as string) || "";
 
   // Fetch 3 other areas for "Also explore"
-  const otherAreas = await AreaModel.find({
+  const rawOtherAreas = await AreaModel.find({
     published: true,
     slug: { $nin: [area1Slug, area2Slug] }
   })
@@ -91,6 +94,38 @@ export default async function ComparisonDetailPage({ params }: { params: Promise
     .limit(3)
     .lean()
     .exec();
+
+  const otherAreas: AreaDoc[] = rawOtherAreas.map((doc) => {
+    const o = doc as Record<string, unknown>;
+    return {
+      id: String(o._id),
+      name: String(o.name ?? ""),
+      slug: String(o.slug ?? ""),
+      description: String(o.description ?? ""),
+      averagePrice: Number(o.averagePrice ?? o.averagePricePerSqft ?? 0),
+      investmentScore: Number(o.investmentScore ?? 0),
+      familyScore: Number(o.familyScore ?? 0),
+      rentalDemand: Number(o.rentalDemand ?? 0),
+      futureGrowth: Number(o.futureGrowth ?? 0),
+      trafficCondition: Number(o.trafficCondition ?? 0),
+      trafficScore: o.trafficScore ? Number(o.trafficScore) : undefined,
+      nearbySchools: (o.nearbySchools as string[]) ?? [],
+      nearbyHospitals: (o.nearbyHospitals as string[]) ?? [],
+      nearbyMetro: Boolean(o.nearbyMetro),
+      coordinates: {
+        lat: Number((o.coordinates as { lat?: number })?.lat ?? 0),
+        lng: Number((o.coordinates as { lng?: number })?.lng ?? 0),
+      },
+      featuredImage: "",
+      gallery: [],
+      pros: (o.pros as string[]) ?? [],
+      cons: (o.cons as string[]) ?? [],
+      lifestyleTags: [],
+      createdAt: o.createdAt ? new Date(o.createdAt as string).toISOString() : new Date().toISOString(),
+      published: Boolean(o.published ?? true),
+      viewCount: Number(o.viewCount ?? 0),
+    };
+  });
 
   return (
     <>
