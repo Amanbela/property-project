@@ -6,7 +6,8 @@ import { getPublishedBlogs } from "@/infrastructure/seo/services/blog-service";
 import { BlogCard } from "@/components/cards/BlogCard";
 import { RecommendationWizard } from "@/features/recommendations/components/RecommendationWizard";
 import { HomepageAreaCard } from "@/components/areas/HomepageAreaCard";
-import { getTopInvestmentAreas, getTopFamilyAreas, getTopGrowthAreas } from "@/features/colony-intelligence/services/area-service";
+import { getHomepageSections } from "@/features/colony-intelligence/services/area-service";
+import type { SectionType } from "@/features/colony-intelligence/services/area-service";
 
 const HOW_IT_WORKS = [
   { step: "01", title: "Set Your Budget & Goals", desc: "Tell us your budget range, property type, and purpose — no browsing required.", color: "bg-brand-50 text-brand-600", icon: Target },
@@ -21,12 +22,35 @@ const FAQS = [
   { q: "Is this platform free to use?",                         a: "Completely free for property seekers. We generate leads for verified builders and agents — you pay nothing." },
 ];
 
+const SECTION_CONFIG: Record<SectionType, { title: string; subtitle: string }> = {
+  investment: {
+    title: "Best Areas for Investment",
+    subtitle: "Highest ROI potential based on infrastructure growth and developer activity.",
+  },
+  growth: {
+    title: "Fastest Growing Areas",
+    subtitle: "Upcoming hotspots with new residential projects and commercial development.",
+  },
+  family: {
+    title: "Family-Friendly Areas",
+    subtitle: "Top-rated neighborhoods for schools, safety, and community living.",
+  },
+  popular: {
+    title: "Most Popular Areas",
+    subtitle: "Most searched and viewed localities by property seekers in Indore.",
+  },
+  affordable: {
+    title: "Budget-Friendly Areas",
+    subtitle: "Best value localities with great amenities at affordable price points.",
+  },
+};
+
+const HP_SECTIONS: SectionType[] = ["investment", "growth", "family", "popular", "affordable"];
+
 export default async function HomePage() {
-  const [blogs, topInvestment, topFamily, topGrowth] = await Promise.all([
+  const [blogs, sections] = await Promise.all([
     getPublishedBlogs(6),
-    getTopInvestmentAreas(3),
-    getTopFamilyAreas(3),
-    getTopGrowthAreas(3),
+    getHomepageSections(),
   ]);
 
   return (
@@ -84,68 +108,35 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Top Investment Areas ──────────────────────────── */}
-      {topInvestment.length > 0 && (
-        <section>
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <h2 className="heading-lg">Best Areas for Investment</h2>
-              <p className="mt-1 text-body text-sm">Highest scoring areas for long-term ROI and appreciation.</p>
+      {/* ── Area Sections (deduplicated, diverse content) ── */}
+      {HP_SECTIONS.map((key, idx) => {
+        const areas = sections[key];
+        const cfg = SECTION_CONFIG[key];
+        if (areas.length === 0) return null;
+        return (
+          <section key={key}>
+            <div className="mb-8 flex items-end justify-between">
+              <div>
+                <h2 className="heading-lg">{cfg.title}</h2>
+                <p className="mt-1 text-body text-sm">{cfg.subtitle}</p>
+              </div>
+              <Link href="/areas" className="hidden items-center gap-1 text-sm font-semibold text-brand-600 hover:underline md:flex">
+                View All Areas <ArrowRight size={14} />
+              </Link>
             </div>
-            <Link href="/areas" className="hidden items-center gap-1 text-sm font-semibold text-brand-600 hover:underline md:flex">
-              View All Areas <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {topInvestment.map((area) => (
-              <HomepageAreaCard key={area.slug} area={area} badge="Top Investment" badgeColor="bg-brand-600" />
-            ))}
-          </div>
-          <div className="mt-6 text-center md:hidden">
-            <Link href="/areas" className="btn-outline">View All Areas</Link>
-          </div>
-        </section>
-      )}
-
-      {/* ── Fast Growing Areas ────────────────────────────── */}
-      {topGrowth.length > 0 && (
-        <section>
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <h2 className="heading-lg">Fastest Growing Areas</h2>
-              <p className="mt-1 text-body text-sm">High future growth potential with upcoming infrastructure.</p>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {areas.map((area) => (
+                <HomepageAreaCard key={area.slug} area={area} section={key} />
+              ))}
             </div>
-            <Link href="/areas" className="hidden items-center gap-1 text-sm font-semibold text-brand-600 hover:underline md:flex">
-              View All Areas <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {topGrowth.map((area) => (
-              <HomepageAreaCard key={area.slug} area={area} badge="High Growth" badgeColor="bg-purple-600" />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Family Friendly Areas ─────────────────────────── */}
-      {topFamily.length > 0 && (
-        <section>
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <h2 className="heading-lg">Family-Friendly Areas</h2>
-              <p className="mt-1 text-body text-sm">Top-rated areas for community living, schools, and safety.</p>
-            </div>
-            <Link href="/areas" className="hidden items-center gap-1 text-sm font-semibold text-brand-600 hover:underline md:flex">
-              View All Areas <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {topFamily.map((area) => (
-              <HomepageAreaCard key={area.slug} area={area} badge="Family Friendly" badgeColor="bg-trust-600" />
-            ))}
-          </div>
-        </section>
-      )}
+            {idx === 0 && (
+              <div className="mt-6 text-center md:hidden">
+                <Link href="/areas" className="btn-outline">View All Areas</Link>
+              </div>
+            )}
+          </section>
+        );
+      })}
 
       {/* ── Market Insights ───────────────────────────────── */}
       {blogs.length > 0 && (

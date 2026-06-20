@@ -1,15 +1,72 @@
 import Link from "next/link";
-import { TrendingUp, Shield, Users, MapPin, ArrowRight, BarChart3 } from "lucide-react";
-import type { AreaDoc } from "@/features/colony-intelligence/services/area-service";
+import { TrendingUp, Shield, Users, MapPin, ArrowRight, BarChart3, Eye, DollarSign } from "lucide-react";
+import type { AreaDoc, SectionType } from "@/features/colony-intelligence/services/area-service";
 
 interface Props {
   area: AreaDoc;
-  badge?: string;
-  badgeColor?: string;
+  section?: SectionType;
   comparisonSlug?: string;
 }
 
-export function HomepageAreaCard({ area, badge, badgeColor = "bg-brand-500", comparisonSlug }: Props) {
+const SECTION_META: Record<SectionType, { badge: string; badgeColor: string }> = {
+  investment: { badge: "Top Investment", badgeColor: "bg-brand-600" },
+  growth: { badge: "High Growth", badgeColor: "bg-purple-600" },
+  family: { badge: "Family Friendly", badgeColor: "bg-trust-600" },
+  popular: { badge: "Most Viewed", badgeColor: "bg-amber-600" },
+  affordable: { badge: "Budget Friendly", badgeColor: "bg-emerald-600" },
+};
+
+function getSectionDescription(area: AreaDoc, section: SectionType): string {
+  switch (section) {
+    case "investment":
+      return `Scores ${area.investmentScore}/100 for investment potential. ${area.nearbyITHubs?.length ? `Driven by ${area.nearbyITHubs.length} IT hub${area.nearbyITHubs.length > 1 ? "s" : ""} and infrastructure growth.` : "Strong appreciation potential due to development pipeline."}`;
+    case "growth":
+      return `Future growth score: ${area.futureGrowth}/100. ${area.nearbyITHubs?.length ? `${area.nearbyITHubs.slice(0, 2).join(" & ")} driving demand. ` : ""}New residential and commercial projects underway.`;
+    case "family":
+      return `Family score: ${area.familyScore}/100. ${area.nearbySchools?.length ? `Top schools: ${area.nearbySchools.slice(0, 2).join(", ")}. ` : ""}Safe neighborhoods with parks and community amenities.`;
+    case "popular":
+      return `${area.viewCount}+ property seekers viewed this area. Strong scores across investment (${area.investmentScore}), family (${area.familyScore}), and growth (${area.futureGrowth}).`;
+    case "affordable":
+      return `Avg. ₹${area.averagePrice.toLocaleString()}/sq.ft — budget-friendly without compromising on connectivity and essential amenities.`;
+    default:
+      return area.description;
+  }
+}
+
+function getPrimaryValue(area: AreaDoc, section: SectionType): { label: string; value: string; icon: React.ReactNode } {
+  switch (section) {
+    case "affordable":
+      return {
+        label: "Price",
+        value: `₹${area.averagePrice.toLocaleString()}/ft`,
+        icon: <DollarSign size={10} />,
+      };
+    case "popular":
+      return {
+        label: "Views",
+        value: `${area.viewCount}+`,
+        icon: <Eye size={10} />,
+      };
+    case "growth":
+      return {
+        label: "Growth",
+        value: `${area.futureGrowth}`,
+        icon: <TrendingUp size={10} />,
+      };
+    default:
+      return {
+        label: "Score",
+        value: `${area.investmentScore}`,
+        icon: <BarChart3 size={10} />,
+      };
+  }
+}
+
+export function HomepageAreaCard({ area, section, comparisonSlug }: Props) {
+  const meta = section ? SECTION_META[section] : { badge: "", badgeColor: "" };
+  const description = section ? getSectionDescription(area, section) : area.description;
+  const primary = section ? getPrimaryValue(area, section) : { label: "Score", value: `${area.investmentScore}`, icon: <BarChart3 size={10} /> };
+
   return (
     <Link
       href={`/areas/${area.slug}`}
@@ -23,15 +80,15 @@ export function HomepageAreaCard({ area, badge, badgeColor = "bg-brand-500", com
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        {badge && (
-          <span className={`absolute left-3 top-3 rounded-full ${badgeColor} px-3 py-1 text-[10px] font-bold text-white shadow-sm`}>
-            {badge}
+        {meta.badge && (
+          <span className={`absolute left-3 top-3 rounded-full ${meta.badgeColor} px-3 py-1 text-[10px] font-bold text-white shadow-sm`}>
+            {meta.badge}
           </span>
         )}
-        {/* Score Badge */}
+        {/* Primary Metric Badge */}
         <div className="absolute bottom-3 right-3 rounded-full bg-white/90 backdrop-blur-sm px-3 py-1.5 text-center shadow-sm">
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Score</p>
-          <p className="text-sm font-bold text-brand-600">{area.investmentScore}</p>
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">{primary.label}</p>
+          <p className="text-sm font-bold text-brand-600">{primary.value}</p>
         </div>
         <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-medium text-slate-600 shadow-sm">
           <MapPin size={10} />
@@ -44,7 +101,7 @@ export function HomepageAreaCard({ area, badge, badgeColor = "bg-brand-500", com
         <h3 className="font-display text-lg font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
           {area.name}
         </h3>
-        <p className="mt-1 text-sm text-slate-500 line-clamp-2 leading-relaxed">{area.description}</p>
+        <p className="mt-1 text-sm text-slate-500 line-clamp-2 leading-relaxed">{description}</p>
 
         {/* Scores */}
         <div className="mt-4 flex items-center gap-4 border-t border-slate-100 pt-3 text-xs">

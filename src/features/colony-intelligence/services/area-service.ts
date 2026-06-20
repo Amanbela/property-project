@@ -215,6 +215,57 @@ export async function countPublishedAreas() {
 
 // ─── Homepage Dynamic Sections ─────────────────────────────────
 
+export type SectionType = "investment" | "growth" | "family" | "popular" | "affordable";
+
+export interface HomepageSections {
+  investment: AreaDoc[];
+  growth: AreaDoc[];
+  family: AreaDoc[];
+  popular: AreaDoc[];
+  affordable: AreaDoc[];
+}
+
+/**
+ * Single DB call + in-memory sort for all homepage sections.
+ * Guarantees no area appears in more than one section.
+ */
+export async function getHomepageSections(): Promise<HomepageSections> {
+  if (!isMongoConfigured()) {
+    return { investment: [], growth: [], family: [], popular: [], affordable: [] };
+  }
+  await connectDB();
+
+  const all = await AreaModel.find({ published: true }).lean();
+  const docs = all.map((r) => toPublic(r as Record<string, unknown>)!).filter(Boolean) as AreaDoc[];
+
+  const used = new Set<string>();
+
+  const excludeUsed = (arr: AreaDoc[]) => arr.filter((a) => !used.has(a.slug));
+  const markUsed = (arr: AreaDoc[]) => {
+    arr.forEach((a) => used.add(a.slug));
+    return arr;
+  };
+
+  const investment = markUsed(
+    excludeUsed([...docs].sort((a, b) => b.investmentScore - a.investmentScore)).slice(0, 3),
+  );
+  const family = markUsed(
+    excludeUsed([...docs].sort((a, b) => b.familyScore - a.familyScore)).slice(0, 3),
+  );
+  const growth = markUsed(
+    excludeUsed([...docs].sort((a, b) => b.futureGrowth - a.futureGrowth)).slice(0, 3),
+  );
+  const popular = markUsed(
+    excludeUsed([...docs].sort((a, b) => b.viewCount - a.viewCount)).slice(0, 3),
+  );
+  const affordable = markUsed(
+    excludeUsed([...docs].sort((a, b) => a.averagePrice - b.averagePrice)).slice(0, 3),
+  );
+
+  return { investment, growth, family, popular, affordable };
+}
+
+/** @deprecated Use getHomepageSections() for deduplicated results */
 export async function getTopInvestmentAreas(limit = 3): Promise<AreaDoc[]> {
   if (!isMongoConfigured()) return [];
   await connectDB();
@@ -225,6 +276,7 @@ export async function getTopInvestmentAreas(limit = 3): Promise<AreaDoc[]> {
   return rows.map((r) => toPublic(r as Record<string, unknown>)!).filter(Boolean) as AreaDoc[];
 }
 
+/** @deprecated Use getHomepageSections() for deduplicated results */
 export async function getTopFamilyAreas(limit = 3): Promise<AreaDoc[]> {
   if (!isMongoConfigured()) return [];
   await connectDB();
@@ -235,6 +287,7 @@ export async function getTopFamilyAreas(limit = 3): Promise<AreaDoc[]> {
   return rows.map((r) => toPublic(r as Record<string, unknown>)!).filter(Boolean) as AreaDoc[];
 }
 
+/** @deprecated Use getHomepageSections() for deduplicated results */
 export async function getTopGrowthAreas(limit = 3): Promise<AreaDoc[]> {
   if (!isMongoConfigured()) return [];
   await connectDB();
@@ -245,6 +298,7 @@ export async function getTopGrowthAreas(limit = 3): Promise<AreaDoc[]> {
   return rows.map((r) => toPublic(r as Record<string, unknown>)!).filter(Boolean) as AreaDoc[];
 }
 
+/** @deprecated Use getHomepageSections() for deduplicated results */
 export async function getTopRentalAreas(limit = 3): Promise<AreaDoc[]> {
   if (!isMongoConfigured()) return [];
   await connectDB();
