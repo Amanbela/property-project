@@ -51,10 +51,20 @@ export function BudgetRangeForm({ initialData, isEdit }: BudgetRangeFormProps) {
   const [areas, setAreas] = useState<AreaOption[]>([]);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
+  // Strip Mongoose-only fields that would poison Zod validation:
+  // _id, createdAt, updatedAt are NOT registered form fields. If left in
+  // defaultValues they appear in the resolver payload where z.date() rejects
+  // their JSON-serialized string form, causing silent validation failure.
+  const formDefaults = React.useMemo(() => {
+    if (!initialData) return defaultValues;
+    const { _id, createdAt, updatedAt, ...rest } = initialData;
+    return Object.keys(rest).length > 0 ? rest : defaultValues;
+  }, [initialData]);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { register, handleSubmit, formState: { errors }, control, watch, setValue } = useForm<any>({
     resolver: zodResolver(BudgetRangeSchema),
-    defaultValues: (initialData || defaultValues),
+    defaultValues: formDefaults,
   });
 
   const watchedLabel = watch("label");
@@ -109,8 +119,12 @@ export function BudgetRangeForm({ initialData, isEdit }: BudgetRangeFormProps) {
     }
   };
 
+  const onError = () => {
+    toast.error("Please fix the form errors before saving");
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-6xl pb-20">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-8 max-w-6xl pb-20">
       {/* Sticky Header */}
       <div className="sticky top-0 z-10 -mx-4 border-b border-slate-200 bg-white/80 px-4 py-4 backdrop-blur-md sm:-mx-8 sm:px-8">
         <div className="flex items-center justify-between">
@@ -367,7 +381,6 @@ export function BudgetRangeForm({ initialData, isEdit }: BudgetRangeFormProps) {
             <Controller
               name="recommendedAreas"
               control={control}
-              defaultValue={[]}
               render={({ field }) => {
                 const selected: string[] = field.value ?? [];
                 return (
